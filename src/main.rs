@@ -1,66 +1,59 @@
-use redirect_uri::listen_to_redirect_server;
-use spotify_rs::{AuthCodeClient, AuthCodeFlow, RedirectUrl};
 use std::error::Error;
-mod redirect_uri;
 
-struct UserConfig {
-    redirect_port: String,
-    client_id: String,
-    client_secret: String,
-}
+use clap::Parser;
+use cli::{Cli, Commands};
+use log::error;
 
-impl UserConfig {
-    pub fn redirect_as_uri(&self) -> String {
-        format!("http://localhost:{}", self.redirect_port)
-    }
-    pub fn redirect_as_addr(&self) -> String {
-        format!("127.0.0.1:{}", self.redirect_port)
-    }
-}
-
-fn read_user_config() -> UserConfig {
-    UserConfig {
-        redirect_port: std::env::var("redirect_port").unwrap(),
-        client_id: std::env::var("client_id").unwrap(),
-        client_secret: std::env::var("client_secret").unwrap(),
-    }
-}
-
-fn create_playlist() {}
-fn generate_playlist_recommendations() {
-    // see - https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
-    // see - https://developer.spotify.com/documentation/web-api/reference/get-recommendations
-    // see - https://developer.spotify.com/documentation/web-api/reference/get-audio-analysis
-    // see - https://developer.spotify.com/documentation/web-api/reference/get-audio-features
-}
+mod cli;
+mod config;
+mod spotify;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let config = read_user_config();
-    let scopes = vec!["user-library-read", "playlist-read-private"];
+    colog::init();
+    let app = Cli::parse();
+    let config = config::read_user_config();
+    let spotify = spotify::client::initialize_client(config);
+    let mut client = spotify.await?;
+    let user = client.get_current_user_profile().await?;
 
-    // Redirect the user to this URL to get the auth code and CSRF token
-    let (client, url) = AuthCodeClient::new(
-        AuthCodeFlow::new(
-            config.client_id.clone(),
-            config.client_secret.clone(),
-            scopes,
-        ),
-        RedirectUrl::new(config.redirect_as_uri()).unwrap(),
-        true,
-    );
+    match app.command {
+        Commands::LikedPlaylist => {
+            match spotify::tracks::duplicate_users_saved_tracks(client, user.id).await {
+                Ok(_) => {
+                    log::info!("Success")
+                }
+                Err(error) => {
+                    error!("{}", error)
+                }
+            }
+        }
+        Commands::Create {
+            library,
+            tempo,
+            energy,
+            instrumentalness,
+            valence,
+            popularity,
+            name,
+        } => match library {
+            cli::LibraryType::Playlist => {
+                // TODO: identify all the tracks necessary for this playlist or queue
+                // Create the playlist and add the tracks to it
+                let playlst = client
+                    .create_playlist(
+                        user.id,
+                        name.unwrap_or(String::from("New Playlist Needs Better Name")),
+                    )
+                    .description(String::from(
+                        "A new playlist created by the powers of technology",
+                    ))
+                    .send()
+                    .await?;
+            }
 
-    println!("Click the authorization link:");
-    println!("{}", url);
-
-    // They will then have to be redirected to the `redirect_url` you specified,
-    // with those two parameters present in the URL
-    if let Some(credentials) = listen_to_redirect_server(config.redirect_as_addr()) {
-        // Finally, exchange the auth code for an access token
-
-        let mut spotify = client
-            .authenticate(credentials.auth_code, credentials.csrf_token)
-            .await?;
+            cli::LibraryType::Queue => {}
+        },
     }
 
     Ok(())

@@ -1,22 +1,37 @@
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 
-pub struct RedirectCredentials {
+use log::{error, info, trace};
+use spotify_rs::auth::{NoVerifier, Token};
+use spotify_rs::client::Client;
+use spotify_rs::SpotifyResult;
+use spotify_rs::{AuthCodeClient, AuthCodeFlow, RedirectUrl};
+
+use crate::config::UserConfig;
+
+const SCOPES: [&str; 4] = [
+    "user-library-read",
+    "playlist-read-private",
+    "playlist-modify-private",
+    "playlist-modify-public",
+];
+
+struct RedirectCredentials {
     pub auth_code: String,
     pub csrf_token: String,
 }
 
-pub fn listen_to_redirect_server(redirect_uri: String) -> Option<RedirectCredentials> {
+fn listen_to_redirect_server(redirect_uri: String) -> Option<RedirectCredentials> {
     let redirect_listener = TcpListener::bind(redirect_uri).expect("Unable to create listener");
     for stream in redirect_listener.incoming() {
         if stream.is_ok() {
             match handle_connection(stream.unwrap()) {
                 Some(credentials) => {
-                    println!("Retrieved credentials");
+                    info!("Retrieved credentials");
                     return Some(credentials);
                 }
 
-                None => println!("Listening..."),
+                None => trace!("Listening..."),
             }
         }
     }
@@ -67,7 +82,7 @@ fn respond_with_success(mut stream: TcpStream) {
 }
 
 fn respond_with_error(error_message: String, mut stream: TcpStream) {
-    println!("Error: {}", error_message);
+    error!("Error: {}", error_message);
     let response = format!(
         "HTTP/1.1 400 Bad Request\r\n\r\n400 - Bad Request - {}",
         error_message
@@ -75,4 +90,33 @@ fn respond_with_error(error_message: String, mut stream: TcpStream) {
 
     stream.write_all(response.as_bytes()).unwrap();
     stream.flush().unwrap();
+}
+
+pub async fn initialize_client(
+    config: UserConfig,
+) -> SpotifyResult<Client<Token, AuthCodeFlow, NoVerifier>> {
+    // Redirect the user to this URL to get the auth code and CSRF token
+    let (client, url) = AuthCodeClient::new(
+        AuthCodeFlow::new(
+            config.client_id.clone(),
+            config.client_secret.clone(),
+            SCOPES,
+        ),
+        RedirectUrl::new(config.redirect_as_uri()).unwrap(),
+        true,
+    );
+    info!("Click the authorization link:");
+    info!("{}", url);
+
+    // They will then have to be redirected to the `redirect_url` you specified,
+    // with those two parameters present in the URL
+    if let Some(credentials) = listen_to_redirect_server(config.redirect_as_addr()) {
+        // Finally, exchange the auth code for an access token
+
+        client
+            .authenticate(credentials.auth_code, credentials.csrf_token)
+            .await
+    } else {
+        Err(spotify_rs::Error::NotAuthenticated)
+    }
 }
