@@ -6,12 +6,14 @@ use clap::{Parser, Subcommand, ValueEnum};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+    #[arg(short, long, help = "Set log level to trace", global = true)]
+    pub trace: bool,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
     #[command(
-        about = "Either create a public replica of your Starred Music or update the current public replica"
+        about = "Either create a public replica of your Starred Music or update the current existing replica"
     )]
     LikedPlaylist,
     Create {

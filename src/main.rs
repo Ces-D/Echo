@@ -10,8 +10,14 @@ mod spotify;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    colog::init();
     let app = Cli::parse();
+
+    let mut trace_builder = colog::default_builder();
+    if app.trace {
+        trace_builder.filter_level(log::LevelFilter::Trace);
+    }
+    trace_builder.init();
+
     let config = config::read_user_config();
     let spotify = spotify::client::initialize_client(config);
     let mut client = spotify.await?;
