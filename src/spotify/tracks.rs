@@ -110,9 +110,6 @@ pub async fn duplicate_users_saved_tracks(
 }
 
 /// TODO: REDO:
-/// compare the total tracks in both playlists and the first 50 tracks in each playlist. If they
-/// are not identical (via checksum) then we believe there is a difference.
-/// - this is the case of added songs and removed songs (with exceptions)
 /// load all the starred tracks and the songs in the public playlist and append the results in the tmp
 /// files
 /// Update the tmp file by creating a set using the name and artist and album

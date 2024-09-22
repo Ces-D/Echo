@@ -23,9 +23,6 @@ pub fn write_spotify_result_to_temp_file(buffer: &[u8]) -> Option<File> {
     }
 }
 
-// TODO: This is not needed for syncing playlist due to offset calc. However if we implement
-// reordering then it may be. This may be needed for future plans where we need to access the same
-// data across threads
 const TEMP_NAME_PREFIX: &str = "echo-";
 pub fn create_app_temp_file(prefix: &str) -> Option<NamedTempFile> {
     let app_named_prefix = format!("{}{}", TEMP_NAME_PREFIX, prefix);
