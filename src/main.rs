@@ -6,7 +6,9 @@ use log::error;
 
 mod cli;
 mod config;
+mod error;
 mod spotify;
+mod utils;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -25,14 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match app.command {
         Commands::LikedPlaylist => {
-            match spotify::tracks::duplicate_users_saved_tracks(client, user.id).await {
-                Ok(_) => {
-                    log::info!("Success")
-                }
-                Err(error) => {
-                    error!("{}", error)
-                }
-            }
+            todo!()
         }
         Commands::Create {
             library,

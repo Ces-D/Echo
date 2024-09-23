@@ -8,13 +8,7 @@ use spotify_rs::SpotifyResult;
 use spotify_rs::{AuthCodeClient, AuthCodeFlow, RedirectUrl};
 
 use crate::config::UserConfig;
-
-const SCOPES: [&str; 4] = [
-    "user-library-read",
-    "playlist-read-private",
-    "playlist-modify-private",
-    "playlist-modify-public",
-];
+use crate::spotify::constants::SCOPES;
 
 struct RedirectCredentials {
     pub auth_code: String,
