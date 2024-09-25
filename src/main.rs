@@ -1,14 +1,14 @@
+use std::borrow::BorrowMut;
 use std::error::Error;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use log::error;
+use echo;
+use echo::spotify::constants::TEST_PLAYLIST_NAME;
+use echo::spotify::playlist::CreatePlaylistParams;
+use log::{error, info};
 
 mod cli;
-mod config;
-mod error;
-mod spotify;
-mod utils;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -20,42 +20,45 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     trace_builder.init();
 
-    let config = config::read_user_config();
-    let spotify = spotify::client::initialize_client(config);
+    let config = echo::config::read_user_config();
+    let spotify = echo::spotify::client::initialize_client(config);
     let mut client = spotify.await?;
     let user = client.get_current_user_profile().await?;
 
     match app.command {
-        Commands::LikedPlaylist => {
-            todo!()
-        }
-        Commands::Create {
-            library,
-            tempo,
-            energy,
-            instrumentalness,
-            valence,
-            popularity,
-            name,
-        } => match library {
-            cli::LibraryType::Playlist => {
-                // TODO: identify all the tracks necessary for this playlist or queue
-                // Create the playlist and add the tracks to it
-                let playlst = client
-                    .create_playlist(
-                        user.id,
-                        name.unwrap_or(String::from("New Playlist Needs Better Name")),
-                    )
-                    .description(String::from(
-                        "A new playlist created by the powers of technology",
-                    ))
-                    .send()
-                    .await?;
-            }
+        Commands::LikedPlaylist => todo!(),
 
-            cli::LibraryType::Queue => {}
+        Commands::Test { test } => match test {
+            cli::TestType::CreatePlaylist => {
+                match echo::spotify::playlist::create_playlist(
+                    client.borrow_mut(),
+                    CreatePlaylistParams {
+                        name: echo::spotify::constants::TEST_PLAYLIST_NAME.to_string(),
+                        description: echo::spotify::constants::TEST_PLAYLIST_DESCRIPTION
+                            .to_string(),
+                        user_id: user.id,
+                    },
+                )
+                .await
+                {
+                    Ok(playlist) => {
+                        info!(
+                            "{} created test playlist {}: {}",
+                            user.display_name.unwrap_or(String::from("You")),
+                            TEST_PLAYLIST_NAME,
+                            playlist.id
+                        );
+                    }
+                    Err(error) => {
+                        error!("{}", error)
+                    }
+                }
+            }
+            cli::TestType::FindPlaylist => todo!(),
+            cli::TestType::AddTracksToPlaylist => todo!(),
+            cli::TestType::LoadPlaylistTracks => todo!(),
         },
-    }
+    };
 
     Ok(())
 }

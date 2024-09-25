@@ -11,14 +11,14 @@ use crate::utils::any_as_u8_slice;
 
 use super::cache::create_app_temp_file;
 use super::constants::SPOTIFY_PLAYLISTS_LIMIT;
-use super::params::{SpotifyAddItemsParams, SpotifyTracksParams};
+use super::params::{SpotifyAddItemsParams, SpotifyReadTracksParams};
 
-struct LoadTracksParams {
+pub struct LoadTracksParams {
     playlist_id: String,
-    spotify: Option<SpotifyTracksParams>,
+    spotify: Option<SpotifyReadTracksParams>,
 }
 ///  Load tracks from a playlist
-async fn load_playlist_tracks(
+pub async fn load_playlist_tracks(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
     params: LoadTracksParams,
 ) -> Result<NamedTempFile, EchoError> {
@@ -33,8 +33,8 @@ async fn load_playlist_tracks(
                 .get()
                 .await
                 .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-            SpotifyTracksParams::new(
-                SpotifyTracksParams::default().offset,
+            SpotifyReadTracksParams::new(
+                SpotifyReadTracksParams::default().offset,
                 playlist_data.tracks.total,
             )
         }
@@ -59,9 +59,9 @@ async fn load_playlist_tracks(
 }
 
 /// Load tracks from the users starred playlist
-async fn load_starred_playlist_tracks(
+pub async fn load_starred_playlist_tracks(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
-    params: Option<SpotifyTracksParams>,
+    params: Option<SpotifyReadTracksParams>,
 ) -> Result<NamedTempFile, EchoError> {
     let mut playlist_tmp_file =
         create_app_temp_file("users_saved_tracks").map_err(|_| EchoError::IoNamedTempFileError)?;
@@ -74,7 +74,10 @@ async fn load_starred_playlist_tracks(
                 .get()
                 .await
                 .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-            SpotifyTracksParams::new(SpotifyTracksParams::default().offset, playlist_data.total)
+            SpotifyReadTracksParams::new(
+                SpotifyReadTracksParams::default().offset,
+                playlist_data.total,
+            )
         }
     };
 
@@ -96,12 +99,12 @@ async fn load_starred_playlist_tracks(
     Ok(playlist_tmp_file)
 }
 
-struct CreatePlaylistParams {
-    name: String,
-    description: String,
-    user_id: String,
+pub struct CreatePlaylistParams {
+    pub name: String,
+    pub description: String,
+    pub user_id: String,
 }
-async fn create_playlist(
+pub async fn create_playlist(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
     params: CreatePlaylistParams,
 ) -> Result<Playlist, EchoError> {
@@ -114,11 +117,11 @@ async fn create_playlist(
         .map_err(|error| EchoError::ClientRequestError(error.to_string()))
 }
 
-struct AddItemsToPlaylistParams {
+pub struct AddItemsToPlaylistParams {
     playlist_id: String,
     spotify: SpotifyAddItemsParams,
 }
-async fn add_tracks_to_playlist(
+pub async fn add_tracks_to_playlist(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
     params: &mut AddItemsToPlaylistParams,
 ) -> Result<(), EchoError> {
@@ -147,11 +150,11 @@ async fn add_tracks_to_playlist(
     Ok(())
 }
 
-struct FindPlaylistUsingIdentifiersParams {
+pub struct FindPlaylistUsingIdentifiersParams {
     name: String,
     description: Option<String>,
 }
-async fn find_playlist_using_identifiers(
+pub async fn find_playlist_using_identifiers(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
     params: FindPlaylistUsingIdentifiersParams,
 ) -> Result<SimplifiedPlaylist, EchoError> {

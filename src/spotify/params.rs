@@ -1,13 +1,13 @@
 use super::constants::{SPOTIFY_TRACKS_LIMIT, SPOTIFY_URIS_LIMIT};
 
-pub struct SpotifyTracksParams {
+pub struct SpotifyReadTracksParams {
     pub offset: u32,
     limit: u32,
     remaining: bool,
 }
-impl SpotifyTracksParams {
+impl SpotifyReadTracksParams {
     pub fn new(offset: u32, limit: u32) -> Self {
-        SpotifyTracksParams {
+        SpotifyReadTracksParams {
             offset,
             limit,
             remaining: limit > 0,
@@ -40,9 +40,9 @@ impl SpotifyTracksParams {
         }
     }
 }
-impl Default for SpotifyTracksParams {
+impl Default for SpotifyReadTracksParams {
     fn default() -> Self {
-        SpotifyTracksParams {
+        SpotifyReadTracksParams {
             offset: 0,
             limit: SPOTIFY_TRACKS_LIMIT,
             remaining: true,
@@ -51,8 +51,8 @@ impl Default for SpotifyTracksParams {
 }
 
 pub struct SpotifyAddItemsParams {
-    uris: Vec<String>,
     pub position: Option<u32>,
+    uris: Vec<String>,
     remaining: bool,
 }
 impl SpotifyAddItemsParams {
@@ -94,4 +94,59 @@ impl SpotifyAddItemsParams {
     }
 }
 
-// TODO: test these before running. The iterations should return expected limits and uris
+#[cfg(test)]
+mod spotify_params_tests {
+    use super::*;
+
+    #[test]
+    fn read_track_params_while_loop() {
+        let mut params = SpotifyReadTracksParams::new(0, 103);
+        assert!(
+            params.request_limit_exceeded() && params.request_required(),
+            "Request should be exceeded and required"
+        );
+        assert!(
+            params.next_limit() == SPOTIFY_TRACKS_LIMIT,
+            "We can only request the spotify limit at a time"
+        );
+        params.next_limit();
+        assert!(
+            params.offset == 100,
+            "We should have added 50 twice, once per `next_limit` call"
+        );
+        let n = params.next_limit();
+        assert_eq!(
+            params.request_limit_exceeded(),
+            false,
+            "The remaining limit is 3"
+        );
+        assert!(n == 3, "The remaining limit should be 3");
+        assert_eq!(params.request_required(), false);
+    }
+
+    #[test]
+    fn add_items_params_while_loop() {
+        let uris: Vec<String> = (0..150).map(|val| val.to_string()).collect();
+        let mut params = SpotifyAddItemsParams::new(uris, None);
+        assert!(
+            params.request_limit_exceeded() && params.request_required(),
+            "Request should be exceeded and required"
+        );
+        assert!(
+            params.next_items().len() == SPOTIFY_URIS_LIMIT,
+            "We can only send the uri limit"
+        );
+        assert!(
+            params.position == None,
+            "Never provided the original position so we should continue to not have a position"
+        );
+        let n = params.next_items();
+        assert_eq!(
+            params.request_limit_exceeded(),
+            false,
+            "The remaining limit is 50"
+        );
+        assert!(n.len() == 50, "The remaining limit should be 50");
+        assert_eq!(params.request_required(), false);
+    }
+}
