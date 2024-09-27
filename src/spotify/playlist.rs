@@ -1,103 +1,12 @@
-use std::io::Write;
-
 use spotify_rs::auth::{NoVerifier, Token};
 use spotify_rs::client::Client;
 use spotify_rs::model::playlist::{Playlist, SimplifiedPlaylist};
 use spotify_rs::AuthCodeFlow;
-use tempfile::NamedTempFile;
 
 use crate::error::EchoError;
-use crate::utils::any_as_u8_slice;
 
-use super::cache::create_app_temp_file;
 use super::constants::SPOTIFY_PLAYLISTS_LIMIT;
-use super::params::{SpotifyAddItemsParams, SpotifyReadTracksParams};
-
-pub struct LoadTracksParams {
-    playlist_id: String,
-    spotify: Option<SpotifyReadTracksParams>,
-}
-///  Load tracks from a playlist
-pub async fn load_playlist_tracks(
-    client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
-    params: LoadTracksParams,
-) -> Result<NamedTempFile, EchoError> {
-    let mut playlist_tmp_file =
-        create_app_temp_file(&params.playlist_id).map_err(|_| EchoError::IoNamedTempFileError)?;
-
-    let mut spotify_params = match params.spotify {
-        Some(spotify_params) => spotify_params,
-        None => {
-            let playlist_data = client
-                .playlist(&params.playlist_id)
-                .get()
-                .await
-                .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-            SpotifyReadTracksParams::new(
-                SpotifyReadTracksParams::default().offset,
-                playlist_data.tracks.total,
-            )
-        }
-    };
-
-    while spotify_params.request_limit_exceeded() || spotify_params.request_required() {
-        let playlist_data = client
-            .playlist_items(&params.playlist_id)
-            .limit(spotify_params.next_limit())
-            .offset(spotify_params.offset)
-            .get()
-            .await
-            .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-
-        let byte_data = unsafe { any_as_u8_slice(&playlist_data.items) };
-        playlist_tmp_file
-            .write_all(byte_data)
-            .map_err(|_| EchoError::IoNamedTempFileError)?;
-    }
-
-    Ok(playlist_tmp_file)
-}
-
-/// Load tracks from the users starred playlist
-pub async fn load_starred_playlist_tracks(
-    client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
-    params: Option<SpotifyReadTracksParams>,
-) -> Result<NamedTempFile, EchoError> {
-    let mut playlist_tmp_file =
-        create_app_temp_file("users_saved_tracks").map_err(|_| EchoError::IoNamedTempFileError)?;
-
-    let mut spotify_params = match params {
-        Some(spotify_params) => spotify_params,
-        None => {
-            let playlist_data = client
-                .saved_tracks()
-                .get()
-                .await
-                .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-            SpotifyReadTracksParams::new(
-                SpotifyReadTracksParams::default().offset,
-                playlist_data.total,
-            )
-        }
-    };
-
-    while spotify_params.request_limit_exceeded() || spotify_params.request_required() {
-        let playlist_data = client
-            .saved_tracks()
-            .limit(spotify_params.next_limit())
-            .offset(spotify_params.offset)
-            .get()
-            .await
-            .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-
-        let byte_data = unsafe { any_as_u8_slice(&playlist_data.items) };
-        playlist_tmp_file
-            .write_all(byte_data)
-            .map_err(|_| EchoError::IoNamedTempFileError)?;
-    }
-
-    Ok(playlist_tmp_file)
-}
+use super::params::SpotifyAddItemsParams;
 
 pub struct CreatePlaylistParams {
     pub name: String,
@@ -118,8 +27,8 @@ pub async fn create_playlist(
 }
 
 pub struct AddItemsToPlaylistParams {
-    playlist_id: String,
-    spotify: SpotifyAddItemsParams,
+    pub playlist_id: String,
+    pub spotify: SpotifyAddItemsParams,
 }
 pub async fn add_tracks_to_playlist(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
@@ -151,8 +60,8 @@ pub async fn add_tracks_to_playlist(
 }
 
 pub struct FindPlaylistUsingIdentifiersParams {
-    name: String,
-    description: Option<String>,
+    pub name: String,
+    pub description: Option<String>,
 }
 pub async fn find_playlist_using_identifiers(
     client: &mut Client<Token, AuthCodeFlow, NoVerifier>,

@@ -16,8 +16,22 @@ pub enum Commands {
         about = "Either create a public replica of your Starred Music or update the current existing replica"
     )]
     LikedPlaylist,
+    LoadPlaylist {
+        #[arg(
+            short,
+            long,
+            help = "Id of playlist. Users liked tracks are selected by default"
+        )]
+        playlist_id: Option<String>,
+        #[arg(long, default_value_t = 0)]
+        offset: u32,
+        #[arg(long)]
+        limit: Option<u32>,
+    },
     Test {
         test: TestType,
+        #[arg(short, long, help = "Required for certain test")]
+        playlist_id: Option<String>,
     },
 }
 
@@ -26,5 +40,4 @@ pub enum TestType {
     CreatePlaylist,
     FindPlaylist,
     AddTracksToPlaylist,
-    LoadPlaylistTracks,
 }

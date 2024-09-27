@@ -5,10 +5,15 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use echo;
 use echo::spotify::constants::TEST_PLAYLIST_NAME;
-use echo::spotify::playlist::CreatePlaylistParams;
+use echo::spotify::params::SpotifyAddItemsParams;
+use echo::spotify::playlist::{
+    AddItemsToPlaylistParams, CreatePlaylistParams, FindPlaylistUsingIdentifiersParams,
+};
 use log::{error, info};
 
 mod cli;
+mod handlers;
+mod store;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -27,8 +32,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match app.command {
         Commands::LikedPlaylist => todo!(),
+        Commands::LoadPlaylist {
+            playlist_id,
+            offset,
+            limit,
+        } => {
+            match handlers::load_playlist::load_playlist_handler(
+                client.borrow_mut(),
+                playlist_id,
+                offset,
+                limit,
+            )
+            .await
+            {
+                Ok(success) => {
+                    info!(
+                        "The playlist has been completely loaded. You can view the data here: {}",
+                        success.to_str().unwrap()
+                    )
+                }
+                Err(error) => error!("{}", error),
+            }
+        }
 
-        Commands::Test { test } => match test {
+        Commands::Test { test, playlist_id } => match test {
             cli::TestType::CreatePlaylist => {
                 match echo::spotify::playlist::create_playlist(
                     client.borrow_mut(),
@@ -49,14 +76,50 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             playlist.id
                         );
                     }
-                    Err(error) => {
-                        error!("{}", error)
-                    }
+                    Err(error) => error!("{}", error),
                 }
             }
-            cli::TestType::FindPlaylist => todo!(),
-            cli::TestType::AddTracksToPlaylist => todo!(),
-            cli::TestType::LoadPlaylistTracks => todo!(),
+            cli::TestType::FindPlaylist => {
+                match echo::spotify::playlist::find_playlist_using_identifiers(
+                    client.borrow_mut(),
+                    FindPlaylistUsingIdentifiersParams {
+                        name: echo::spotify::constants::TEST_PLAYLIST_NAME.to_string(),
+                        description: Some(
+                            echo::spotify::constants::TEST_PLAYLIST_DESCRIPTION.to_string(),
+                        ),
+                    },
+                )
+                .await
+                {
+                    Ok(playlist) => {
+                        info!("Located test playlist {}: {}", playlist.name, playlist.id)
+                    }
+                    Err(error) => error!("{}", error),
+                }
+            }
+            cli::TestType::AddTracksToPlaylist => {
+                if playlist_id.is_none() {
+                    error!("Playlist id required");
+                }
+                let uris: Vec<String> = vec![
+                    String::from("spotify:track:7EdPWyTm6EtO5httz2Dcoa"), // Hollow - Morten, Artbat
+                ];
+                // TODO: LoadPlaylist needs to work and store the result in a file so that we
+                // can use the tracks for this test
+                let mut params = AddItemsToPlaylistParams {
+                    playlist_id: playlist_id.unwrap(),
+                    spotify: SpotifyAddItemsParams::new(uris, None),
+                };
+                match echo::spotify::playlist::add_tracks_to_playlist(
+                    client.borrow_mut(),
+                    params.borrow_mut(),
+                )
+                .await
+                {
+                    Ok(_) => todo!(),
+                    Err(_) => todo!(),
+                }
+            }
         },
     };
 
