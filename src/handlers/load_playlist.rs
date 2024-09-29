@@ -8,7 +8,9 @@ use spotify_rs::AuthCodeFlow;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::store::{self, create_stored_file_path};
+use crate::store::{self, stored_file_path};
+
+use super::constants;
 
 /// Load all data regarding a specific playlist and write into a storage file. Returns the path of
 /// the storage file
@@ -20,13 +22,10 @@ pub async fn load_playlist_handler(
     offset: u32,
     limit: Option<u32>,
 ) -> Result<PathBuf, EchoError> {
-    let file_name = format!(
-        "{ }.json",
-        playlist_id
-            .clone()
-            .unwrap_or(String::from("user_liked_tracks"))
-    );
-    let mut stored_file = store::open_stored_file(&file_name, false, true)?;
+    let identifier = playlist_id
+        .clone()
+        .unwrap_or(constants::USERS_SAVED_TRACKS_STORE_FILE_PREFIX.to_string());
+    let mut stored_file = store::open_stored_file(&identifier, false, true)?;
     match playlist_id {
         Some(pid) => {
             let l = match limit {
@@ -62,7 +61,7 @@ pub async fn load_playlist_handler(
                     .map_err(|error| EchoError::IoStoredFileError(error.to_string()));
             }
 
-            return Ok(create_stored_file_path(&file_name).unwrap());
+            return Ok(stored_file_path(&identifier).unwrap());
         }
         None => {
             let l = match limit {
@@ -99,7 +98,7 @@ pub async fn load_playlist_handler(
                     .map_err(|error| EchoError::IoStoredFileError(error.to_string()));
             }
 
-            return Ok(create_stored_file_path(&file_name).unwrap());
+            return Ok(stored_file_path(&identifier).unwrap());
         }
     }
 }

@@ -32,6 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match app.command {
         Commands::LikedPlaylist => todo!(),
+
         Commands::LoadPlaylist {
             playlist_id,
             offset,
@@ -48,6 +49,33 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 Ok(success) => {
                     info!(
                         "The playlist has been completely loaded. You can view the data here: {}",
+                        success.to_str().unwrap()
+                    )
+                }
+                Err(error) => error!("{}", error),
+            }
+        }
+
+        Commands::ComparePlaylist {
+            playlist_id_a,
+            playlist_id_b,
+            offset,
+            limit,
+            cmp,
+        } => {
+            match handlers::compare_playlist::compare_playlist_handler(
+                client.borrow_mut(),
+                playlist_id_a,
+                playlist_id_b,
+                offset,
+                limit,
+                cmp,
+            )
+            .await
+            {
+                Ok(success) => {
+                    info!(
+                        "The playlist comparison has completed. You can view the data here: {}",
                         success.to_str().unwrap()
                     )
                 }

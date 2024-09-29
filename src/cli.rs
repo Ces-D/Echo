@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -16,6 +18,8 @@ pub enum Commands {
         about = "Either create a public replica of your Starred Music or update the current existing replica"
     )]
     LikedPlaylist,
+
+    #[command(about = "Load all the data about a specific playlist")]
     LoadPlaylist {
         #[arg(
             short,
@@ -25,9 +29,32 @@ pub enum Commands {
         playlist_id: Option<String>,
         #[arg(long, default_value_t = 0)]
         offset: u32,
-        #[arg(long)]
+        #[arg(long, help = "If not provided the entire playlist is loaded")]
         limit: Option<u32>,
     },
+
+    #[command(about = "Compare the data between two specific playlists")]
+    ComparePlaylist {
+        #[arg(
+            short = 'a',
+            long,
+            help = "Id of playlist a. Users liked tracks are selected by default"
+        )]
+        playlist_id_a: Option<String>,
+        #[arg(
+            short = 'b',
+            long,
+            help = "Id of playlist b. Users liked tracks are selected by default"
+        )]
+        playlist_id_b: Option<String>,
+        #[arg(long, default_value_t = 0)]
+        offset: u32,
+        #[arg(long, help = "If not provided the entire playlist is loaded")]
+        limit: Option<u32>,
+        #[arg(short, long, help = "Method for comparing the playlists", default_value_t=PlaylistCmp::TrackItems)]
+        cmp: PlaylistCmp,
+    },
+
     Test {
         test: TestType,
         #[arg(short, long, help = "Required for certain test")]
@@ -40,4 +67,17 @@ pub enum TestType {
     CreatePlaylist,
     FindPlaylist,
     AddTracksToPlaylist,
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlaylistCmp {
+    TrackItems,
+}
+impl std::fmt::Display for PlaylistCmp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.to_possible_value()
+            .expect("no values are skipped")
+            .get_name()
+            .fmt(f)
+    }
 }

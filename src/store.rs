@@ -25,24 +25,30 @@ pub fn create_app_temp_file(prefix: &str) -> io::Result<NamedTempFile> {
     }
 }
 
-pub fn create_stored_file_path(file_name: &String) -> Option<PathBuf> {
+fn create_store_file_name(identifier: &String) -> String {
+    format!("{}{}.json", NAME_PREFIX, identifier)
+}
+
+/// Ensures the apps store dir exists but does not ensure the file exists.
+/// Call `open_stored_file` to ensure all paths exist
+pub fn stored_file_path(identifier: &String) -> Option<PathBuf> {
     let document_dir_path = document_dir()?;
     let store_path = document_dir_path.join(format!("{}{}", NAME_PREFIX, ECHO_DOCUMENT_STORE));
     if !store_path.is_dir() {
         std::fs::create_dir(store_path.clone()).ok()?;
     }
-    let file_path = store_path.join(format!("{}{}", NAME_PREFIX, file_name));
+    let file_path = store_path.join(create_store_file_name(identifier));
     Some(file_path)
 }
 
 /// Open a file as either write, append, or readonly. The file is ensured to at least exist in the
 /// echo_store
 pub fn open_stored_file(
-    file_name: &String,
+    identifier: &String,
     readonly: bool,
     overwrite: bool,
 ) -> Result<File, EchoError> {
-    match create_stored_file_path(&file_name) {
+    match stored_file_path(identifier) {
         Some(file_path) => {
             if readonly {
                 let file = std::fs::OpenOptions::new()
@@ -62,8 +68,7 @@ pub fn open_stored_file(
             }
         }
         None => Err(EchoError::IoStoredFileError(format!(
-            "Unable to create the stored file path: {}",
-            file_name
+            "Unable to create the stored file path",
         ))),
     }
 }
