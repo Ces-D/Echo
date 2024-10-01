@@ -3,6 +3,7 @@ use std::error::Error;
 
 use clap::Parser;
 use cli::{Cli, Commands};
+use colored::Colorize;
 use echo;
 use echo::spotify::constants::TEST_PLAYLIST_NAME;
 use echo::spotify::params::SpotifyAddItemsParams;
@@ -74,12 +75,35 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .await
             {
                 Ok(success) => {
-                    info!(
-                        "The playlist comparison has completed. You can view the data here: {}",
-                        success.to_str().unwrap()
-                    )
+                    info!("The playlist comparison has completed. You can view the data here:",);
+                    println!("{:>4}", success.to_str().unwrap().on_bright_red());
                 }
                 Err(error) => error!("{}", error),
+            }
+        }
+
+        Commands::FindPlaylist { name, description } => {
+            match handlers::find_playlist::find_playlist_handler(
+                client.borrow_mut(),
+                name,
+                description,
+                user.id,
+            )
+            .await
+            {
+                Ok(summarized_playlists) => {
+                    info!("Most likely matches {}", summarized_playlists.len());
+                    for playlist in summarized_playlists {
+                        println!("{:>4}- {}", "Name".green(), playlist.name);
+                        println!(
+                            "{:>4}- {}",
+                            "Description".green(),
+                            playlist.description.unwrap_or("".to_string())
+                        );
+                        println!("{:>4}- {}", "Id".green(), playlist.id);
+                    }
+                }
+                Err(_) => todo!(),
             }
         }
 

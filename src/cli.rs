@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -53,6 +51,13 @@ pub enum Commands {
         limit: Option<u32>,
         #[arg(short, long, help = "Method for comparing the playlists", default_value_t=PlaylistCmp::TrackItems)]
         cmp: PlaylistCmp,
+    },
+
+    #[command(about = "Search your playlists for something specific")]
+    FindPlaylist {
+        name: String,
+        #[arg(short, long, help = "Optional description included in the playlist")]
+        description: Option<String>,
     },
 
     Test {
