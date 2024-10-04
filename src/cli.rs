@@ -54,11 +54,7 @@ pub enum Commands {
     },
 
     #[command(about = "Search your playlists for something specific")]
-    FindPlaylist {
-        name: String,
-        #[arg(short, long, help = "Optional description included in the playlist")]
-        description: Option<String>,
-    },
+    FindPlaylist { name: String },
 
     Test {
         test: TestType,

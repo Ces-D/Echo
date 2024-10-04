@@ -1,6 +1,3 @@
-use std::borrow::BorrowMut;
-use std::error::Error;
-
 use clap::Parser;
 use cli::{Cli, Commands};
 use colored::Colorize;
@@ -11,6 +8,9 @@ use echo::spotify::playlist::{
     AddItemsToPlaylistParams, CreatePlaylistParams, FindPlaylistUsingIdentifiersParams,
 };
 use log::{error, info};
+use std::borrow::BorrowMut;
+use std::error::Error;
+use std::io::Write;
 
 mod cli;
 mod handlers;
@@ -76,34 +76,40 @@ async fn main() -> Result<(), Box<dyn Error>> {
             {
                 Ok(success) => {
                     info!("The playlist comparison has completed. You can view the data here:",);
-                    println!("{:>4}", success.to_str().unwrap().on_bright_red());
+                    let stdout = std::io::stdout(); // get the global stdout entity
+                    let mut handle = stdout.lock(); // acquire a lock on it
+
+                    writeln!(handle, "{}", success.to_str().unwrap().on_bright_red())?;
                 }
                 Err(error) => error!("{}", error),
             }
         }
 
-        Commands::FindPlaylist { name, description } => {
-            match handlers::find_playlist::find_playlist_handler(
-                client.borrow_mut(),
-                name,
-                description,
-                user.id,
-            )
-            .await
+        Commands::FindPlaylist { name } => {
+            match handlers::find_playlist::find_playlist_handler(client.borrow_mut(), name, user.id)
+                .await
             {
                 Ok(summarized_playlists) => {
-                    info!("Most likely matches {}", summarized_playlists.len());
-                    for playlist in summarized_playlists {
-                        println!("{:>4}- {}", "Name".green(), playlist.name);
-                        println!(
-                            "{:>4}- {}",
-                            "Description".green(),
-                            playlist.description.unwrap_or("".to_string())
-                        );
-                        println!("{:>4}- {}", "Id".green(), playlist.id);
+                    if summarized_playlists.len() == 0 {
+                        info!("Did not find a single match")
+                    } else {
+                        info!("Found Several Matches: {}", summarized_playlists.len());
+                        let stdout = std::io::stdout(); // get the global stdout entity
+                        let mut handle = stdout.lock(); // acquire a lock on it
+                        for playlist in summarized_playlists {
+                            writeln!(handle, "{:<6}{}", "Name".green(), playlist.name)?;
+                            writeln!(
+                                handle,
+                                "{:<6}{}",
+                                "Desc".green(),
+                                playlist.description.unwrap_or("".to_string())
+                            )?;
+                            writeln!(handle, "{:<6}{}", "Id".green(), playlist.id)?;
+                            writeln!(handle, "")?;
+                        }
                     }
                 }
-                Err(_) => todo!(),
+                Err(error) => error!("{}", error),
             }
         }
 
