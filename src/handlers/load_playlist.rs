@@ -12,6 +12,8 @@ use crate::store::{self, stored_file_path};
 
 use super::constants;
 
+// FIXME: The loading writes the data as a buffer. Not Useful since we want json
+
 /// Load all data regarding a specific playlist and write into a storage file. Returns the path of
 /// the storage file
 ///
@@ -57,7 +59,7 @@ pub async fn load_playlist_handler(
                     next_limit
                 );
                 let _ = stored_file
-                    .write_all(unsafe { any_as_u8_slice(&playlist_data) })
+                    .write(unsafe { any_as_u8_slice(&playlist_data) })
                     .map_err(|error| EchoError::IoStoredFileError(error.to_string()));
             }
 

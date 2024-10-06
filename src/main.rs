@@ -4,9 +4,7 @@ use colored::Colorize;
 use echo;
 use echo::spotify::constants::TEST_PLAYLIST_NAME;
 use echo::spotify::params::SpotifyAddItemsParams;
-use echo::spotify::playlist::{
-    AddItemsToPlaylistParams, CreatePlaylistParams, FindPlaylistUsingIdentifiersParams,
-};
+use echo::spotify::playlist::{AddItemsToPlaylistParams, CreatePlaylistParams};
 use log::{error, info};
 use std::borrow::BorrowMut;
 use std::error::Error;
@@ -133,24 +131,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             TEST_PLAYLIST_NAME,
                             playlist.id
                         );
-                    }
-                    Err(error) => error!("{}", error),
-                }
-            }
-            cli::TestType::FindPlaylist => {
-                match echo::spotify::playlist::find_playlist_using_identifiers(
-                    client.borrow_mut(),
-                    FindPlaylistUsingIdentifiersParams {
-                        name: echo::spotify::constants::TEST_PLAYLIST_NAME.to_string(),
-                        description: Some(
-                            echo::spotify::constants::TEST_PLAYLIST_DESCRIPTION.to_string(),
-                        ),
-                    },
-                )
-                .await
-                {
-                    Ok(playlist) => {
-                        info!("Located test playlist {}: {}", playlist.name, playlist.id)
                     }
                     Err(error) => error!("{}", error),
                 }

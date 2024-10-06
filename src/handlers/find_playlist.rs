@@ -2,6 +2,7 @@ use std::borrow::BorrowMut;
 use std::collections::HashMap;
 
 use echo::error::EchoError;
+use echo::spotify::constants::SPOTIFY_PLAYLISTS_LIMIT;
 use log::{debug, trace};
 use spotify_rs::auth::{NoVerifier, Token};
 use spotify_rs::client::Client;
@@ -21,7 +22,7 @@ pub async fn find_playlist_handler(
 ) -> Result<Vec<SummarizedPlaylist>, EchoError> {
     let playlists = client
         .user_playlists(user_id)
-        .limit(50)
+        .limit(SPOTIFY_PLAYLISTS_LIMIT)
         .get()
         .await
         .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;

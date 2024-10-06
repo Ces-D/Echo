@@ -1,32 +1,15 @@
 use std::fs::File;
-use std::io::{self};
 use std::path::PathBuf;
 
 use dirs::document_dir;
-use log::error;
-use tempfile::NamedTempFile;
 
 use echo::error::EchoError;
 
 const NAME_PREFIX: &str = "echo_";
 const ECHO_DOCUMENT_STORE: &str = "store";
 
-pub fn create_app_temp_file(prefix: &str) -> io::Result<NamedTempFile> {
-    let app_named_prefix = format!("{}{}", NAME_PREFIX, prefix);
-    match tempfile::Builder::new()
-        .prefix(app_named_prefix.as_str())
-        .tempfile()
-    {
-        Ok(file) => Ok(file),
-        Err(err) => {
-            error!("Failure to create temp file: {}", app_named_prefix);
-            Err(err)
-        }
-    }
-}
-
 fn create_store_file_name(identifier: &String) -> String {
-    format!("{}{}.json", NAME_PREFIX, identifier)
+    format!("{}{}.toml", NAME_PREFIX, identifier)
 }
 
 /// Ensures the apps store dir exists but does not ensure the file exists.

@@ -66,7 +66,6 @@ pub enum Commands {
 #[derive(ValueEnum, Clone, Copy)]
 pub enum TestType {
     CreatePlaylist,
-    FindPlaylist,
     AddTracksToPlaylist,
 }
 

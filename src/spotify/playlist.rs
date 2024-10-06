@@ -1,12 +1,10 @@
+use crate::spotify::params::SpotifyAddItemsParams;
 use spotify_rs::auth::{NoVerifier, Token};
 use spotify_rs::client::Client;
-use spotify_rs::model::playlist::{Playlist, SimplifiedPlaylist};
+use spotify_rs::model::playlist::Playlist;
 use spotify_rs::AuthCodeFlow;
 
 use crate::error::EchoError;
-
-use super::constants::SPOTIFY_PLAYLISTS_LIMIT;
-use super::params::SpotifyAddItemsParams;
 
 pub struct CreatePlaylistParams {
     pub name: String,
@@ -57,33 +55,4 @@ pub async fn add_tracks_to_playlist(
         }
     }
     Ok(())
-}
-
-pub struct FindPlaylistUsingIdentifiersParams {
-    pub name: String,
-    pub description: Option<String>,
-}
-pub async fn find_playlist_using_identifiers(
-    client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
-    params: FindPlaylistUsingIdentifiersParams,
-) -> Result<SimplifiedPlaylist, EchoError> {
-    let playlists = client
-        .current_user_playlists()
-        .limit(SPOTIFY_PLAYLISTS_LIMIT)
-        .offset(0)
-        .get()
-        .await
-        .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
-    let target = playlists
-        .items
-        .into_iter()
-        .find(|p| p.name == params.name && params.description == p.description);
-    if target.is_some() {
-        Ok(target.unwrap())
-    } else {
-        Err(EchoError::ClientRequestError(format!(
-            "Unable to find playlist: {}",
-            params.name,
-        )))
-    }
 }
