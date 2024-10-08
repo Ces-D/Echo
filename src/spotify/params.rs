@@ -1,51 +1,42 @@
 use super::constants::{SPOTIFY_TRACKS_LIMIT, SPOTIFY_URIS_LIMIT};
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SpotifyReadTracksParams {
     pub offset: u32,
-    limit: u32,
-    remaining: bool,
+    pub limit: u32,
 }
 impl SpotifyReadTracksParams {
-    pub fn new(offset: u32, limit: u32) -> Self {
-        SpotifyReadTracksParams {
-            offset,
-            limit,
-            remaining: limit > 0,
-        }
-    }
-
-    /// Indicates that a request can be started due to a limit > 0.
-    pub fn request_required(&self) -> bool {
-        self.remaining
-    }
-
-    /// Indicates when the request loop can be started due to exceeded remaining limit.
-    /// Behaves as a `do; while;` when paired alongside `request_required`
-    pub fn request_limit_exceeded(&self) -> bool {
-        self.limit > SPOTIFY_TRACKS_LIMIT
-    }
-
-    /// The limit param for the next iteration of requests
-    pub fn next_limit(&mut self) -> u32 {
-        if self.request_limit_exceeded() {
-            self.limit -= SPOTIFY_TRACKS_LIMIT;
-            self.offset += SPOTIFY_TRACKS_LIMIT; // the next request will need to skip the first 50 requested
-            if self.limit == 0 {
-                self.remaining = false
+    /// Returns a vec of params where the limit and offset are structured for requests in parallel
+    /// @see - https://docs.rs/tokio/latest/tokio/macro.join.html
+    pub fn new_async(offset: u32, limit: u32) -> Vec<SpotifyReadTracksParams> {
+        if limit > SPOTIFY_TRACKS_LIMIT {
+            let mut instances: Vec<SpotifyReadTracksParams> = vec![];
+            for loop_value in 0..limit / SPOTIFY_TRACKS_LIMIT {
+                instances.push(SpotifyReadTracksParams {
+                    offset: loop_value * SPOTIFY_TRACKS_LIMIT,
+                    limit: SPOTIFY_TRACKS_LIMIT,
+                });
             }
-            SPOTIFY_TRACKS_LIMIT
+            let remaining = limit % SPOTIFY_TRACKS_LIMIT;
+            if remaining != 0 {
+                let last_offset = limit / SPOTIFY_TRACKS_LIMIT * SPOTIFY_TRACKS_LIMIT;
+                instances.push(SpotifyReadTracksParams {
+                    offset: last_offset,
+                    limit: remaining,
+                });
+            }
+            instances
         } else {
-            self.remaining = false; // the next request should be the final
-            self.limit
+            vec![SpotifyReadTracksParams { offset, limit }]
         }
     }
 }
+
 impl Default for SpotifyReadTracksParams {
     fn default() -> Self {
         SpotifyReadTracksParams {
             offset: 0,
             limit: SPOTIFY_TRACKS_LIMIT,
-            remaining: true,
         }
     }
 }
@@ -99,29 +90,38 @@ mod spotify_params_tests {
     use super::*;
 
     #[test]
-    fn read_track_params_while_loop() {
-        let mut params = SpotifyReadTracksParams::new(0, 103);
-        assert!(
-            params.request_limit_exceeded() && params.request_required(),
-            "Request should be exceeded and required"
-        );
-        assert!(
-            params.next_limit() == SPOTIFY_TRACKS_LIMIT,
-            "We can only request the spotify limit at a time"
-        );
-        params.next_limit();
-        assert!(
-            params.offset == 100,
-            "We should have added 50 twice, once per `next_limit` call"
-        );
-        let n = params.next_limit();
+    fn parallel_read_params_have_correct_offsets() {
+        let params = SpotifyReadTracksParams::new_async(0, 183);
         assert_eq!(
-            params.request_limit_exceeded(),
-            false,
-            "The remaining limit is 3"
+            params[0],
+            SpotifyReadTracksParams {
+                offset: 0,
+                limit: SPOTIFY_TRACKS_LIMIT
+            },
+            "The first item should be the params for the first tracks in the playlist"
         );
-        assert!(n == 3, "The remaining limit should be 3");
-        assert_eq!(params.request_required(), false);
+        assert_eq!(
+            params[1],
+            SpotifyReadTracksParams {
+                offset: SPOTIFY_TRACKS_LIMIT,
+                limit: SPOTIFY_TRACKS_LIMIT
+            }
+        );
+        assert_eq!(
+            params[2],
+            SpotifyReadTracksParams {
+                offset: SPOTIFY_TRACKS_LIMIT * 2,
+                limit: SPOTIFY_TRACKS_LIMIT
+            }
+        );
+        assert_eq!(
+            params.last().unwrap().clone(),
+            SpotifyReadTracksParams {
+                offset: SPOTIFY_TRACKS_LIMIT * 3,
+                limit: 33
+            },
+            "The last item should be the params for the last tracks in the playlist"
+        )
     }
 
     #[test]
