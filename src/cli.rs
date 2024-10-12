@@ -25,10 +25,6 @@ pub enum Commands {
             help = "Id of playlist. Users liked tracks are selected by default"
         )]
         playlist_id: Option<String>,
-        #[arg(long, default_value_t = 0)]
-        offset: u32,
-        #[arg(long, help = "If not provided the entire playlist is loaded")]
-        limit: Option<u32>,
     },
 
     #[command(about = "Compare the data between two specific playlists")]
@@ -45,28 +41,12 @@ pub enum Commands {
             help = "Id of playlist b. Users liked tracks are selected by default"
         )]
         playlist_id_b: Option<String>,
-        #[arg(long, default_value_t = 0)]
-        offset: u32,
-        #[arg(long, help = "If not provided the entire playlist is loaded")]
-        limit: Option<u32>,
         #[arg(short, long, help = "Method for comparing the playlists", default_value_t=PlaylistCmp::TrackItems)]
         cmp: PlaylistCmp,
     },
 
     #[command(about = "Search your playlists for something specific")]
     FindPlaylist { name: String },
-
-    Test {
-        test: TestType,
-        #[arg(short, long, help = "Required for certain test")]
-        playlist_id: Option<String>,
-    },
-}
-
-#[derive(ValueEnum, Clone, Copy)]
-pub enum TestType {
-    CreatePlaylist,
-    AddTracksToPlaylist,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]

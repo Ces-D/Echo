@@ -8,10 +8,11 @@ clap = { version = "4.5.19", features = ["derive"] }
 colog = "1.3.0"
 colored = "2.1.0"
 dirs = "5.0.1"
+futures = "0.3.31"
+futures-util = "0.3.31"
 log = "0.4.22"
 nucleo-matcher = "0.3.1"
+rspotify = { version = "0.13.3", features = ["cli"] }
 serde = "1.0.210"
-spotify-rs = "0.3.14"
 tokio = { version = "1.40.0", features = ["macros", "rt", "rt-multi-thread"] }
 tokio-macros = "2.4.0"
-toml = "0.8.19"

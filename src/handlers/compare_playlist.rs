@@ -1,21 +1,16 @@
 use std::path::PathBuf;
 
-use echo::error::EchoError;
-use spotify_rs::auth::{NoVerifier, Token};
-use spotify_rs::client::Client;
-use spotify_rs::AuthCodeFlow;
-
 use crate::cli::PlaylistCmp;
 use crate::store;
+use echo::error::EchoError;
+use rspotify::AuthCodeSpotify;
 
 use super::constants;
 
 pub async fn compare_playlist_handler(
-    client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
+    client: AuthCodeSpotify,
     playlist_id_a: Option<String>,
     playlist_id_b: Option<String>,
-    offset: u32,
-    limit: Option<u32>,
     cmp: PlaylistCmp,
 ) -> Result<PathBuf, EchoError> {
     let identifier_a = playlist_id_a

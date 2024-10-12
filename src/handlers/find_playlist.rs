@@ -2,28 +2,25 @@ use std::borrow::BorrowMut;
 use std::collections::HashMap;
 
 use echo::error::EchoError;
-use echo::spotify::constants::SPOTIFY_PLAYLISTS_LIMIT;
+use echo::spotify::SPOTIFY_PLAYLISTS_LIMIT;
 use log::{debug, trace};
-use spotify_rs::auth::{NoVerifier, Token};
-use spotify_rs::client::Client;
-use spotify_rs::AuthCodeFlow;
+use rspotify::prelude::OAuthClient;
+use rspotify::AuthCodeSpotify;
 
 #[derive(Clone)]
 pub struct SummarizedPlaylist {
     pub name: String,
-    pub description: Option<String>,
+    pub total: u32,
+    pub public: bool,
     pub id: String,
 }
 
 pub async fn find_playlist_handler(
-    client: &mut Client<Token, AuthCodeFlow, NoVerifier>,
+    client: AuthCodeSpotify,
     name: String,
-    user_id: String,
 ) -> Result<Vec<SummarizedPlaylist>, EchoError> {
     let playlists = client
-        .user_playlists(user_id)
-        .limit(SPOTIFY_PLAYLISTS_LIMIT)
-        .get()
+        .current_user_playlists_manual(Some(SPOTIFY_PLAYLISTS_LIMIT), Some(0))
         .await
         .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
 
@@ -34,8 +31,9 @@ pub async fn find_playlist_handler(
             item.name.clone(),
             SummarizedPlaylist {
                 name: item.name,
-                description: item.description,
-                id: item.id,
+                total: item.tracks.total,
+                public: item.public.is_some_and(|x| x == true),
+                id: item.id.to_string(),
             },
         );
     }
