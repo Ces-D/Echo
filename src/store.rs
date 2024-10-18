@@ -1,15 +1,13 @@
+use dirs::document_dir;
+use echo::error::EchoError;
 use std::fs::File;
 use std::path::PathBuf;
-
-use dirs::document_dir;
-
-use echo::error::EchoError;
 
 const NAME_PREFIX: &str = "echo_";
 const ECHO_DOCUMENT_STORE: &str = "store";
 
 fn create_store_file_name(identifier: &String) -> String {
-    format!("{}{}.toml", NAME_PREFIX, identifier)
+    format!("{}{}.csv", NAME_PREFIX, identifier)
 }
 
 /// Ensures the apps store dir exists but does not ensure the file exists.

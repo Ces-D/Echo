@@ -4,7 +4,6 @@ use colored::Colorize;
 use echo;
 use log::{error, info};
 use rspotify::prelude::OAuthClient;
-use std::borrow::BorrowMut;
 use std::error::Error;
 use std::io::Write;
 
