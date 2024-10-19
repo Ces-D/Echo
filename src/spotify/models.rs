@@ -1,10 +1,17 @@
 use rspotify::model::{AlbumId, ArtistId, TrackId};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct EchoId<'a>(Cow<'a, str>);
+
+impl Display for EchoId<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 impl EchoId<'_> {
     /// Uses targeted (presumably immutable) fields of a track to create a uniqueness hash
@@ -73,7 +80,9 @@ pub struct EchoFullTrack {
     pub popularity: u32,
     pub track_number: u32,
     pub album: EchoId<'static>,
-    pub artists: Vec<EchoId<'static>>, // TODO(CES): csv serialization throws errors here
+    // TODO(CES): csv serialization throws errors here but test this with Display trait
+    /// is a string instead of vec because csv serialization fails with non scalar vecs
+    pub artists: Vec<EchoId<'static>>,
 }
 
 impl From<rspotify::model::FullTrack> for EchoFullTrack {
