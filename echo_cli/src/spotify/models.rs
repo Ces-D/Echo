@@ -1,3 +1,4 @@
+use chrono::Duration;
 use rspotify::model::{AlbumId, ArtistId, TrackId};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -10,6 +11,22 @@ pub struct EchoId<'a>(Cow<'a, str>);
 impl Display for EchoId<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl FromIterator<EchoId<'static>> for String {
+    fn from_iter<T: IntoIterator<Item = EchoId<'static>>>(iter: T) -> Self {
+        let mut c = String::new();
+        let mut peekable_iter = iter.into_iter().peekable();
+        while let Some(id) = peekable_iter.next() {
+            // just adding the break on all but last,
+            // essentially replicating join
+            c += &id.to_string();
+            if peekable_iter.peek().is_some() {
+                c += "//"
+            }
+        }
+        c
     }
 }
 
@@ -79,11 +96,15 @@ pub struct EchoFullTrack {
     pub name: String,
     pub popularity: u32,
     pub track_number: u32,
+    #[serde(rename = "duration_ms")]
+    pub duration: i64,
     pub album: EchoId<'static>,
-    // TODO(CES): csv serialization throws errors here but test this with Display trait
-    /// is a string instead of vec because csv serialization fails with non scalar vecs
-    pub artists: Vec<EchoId<'static>>,
+    /// Would be a Vec<Echo<'_>> but csv doesnt allow Vec of non scalars
+    /// see - FromIterator<EchoId>
+    pub artists: String,
 }
+// TODO(CES): include the added_by and added_at fields but maybe this should go in a different
+// struct or maybe not since this is the only that is using it currently
 
 impl From<rspotify::model::FullTrack> for EchoFullTrack {
     fn from(value: rspotify::model::FullTrack) -> Self {
@@ -96,6 +117,7 @@ impl From<rspotify::model::FullTrack> for EchoFullTrack {
             name: value.name,
             popularity: value.popularity,
             track_number: value.track_number,
+            duration: value.duration.num_milliseconds(),
             album: EchoId::from_simplified_album(value.album),
             artists: value
                 .artists

@@ -1,3 +1,7 @@
 /target
 /run.sh
+.sqllsrc.json
 .env.local
+.env
+.env.docker
+Cargo.lock

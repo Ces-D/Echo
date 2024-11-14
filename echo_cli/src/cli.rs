@@ -32,7 +32,8 @@ pub enum Commands {
         #[arg(
             short = 'a',
             long,
-            help = "Id of playlist a. Users liked tracks are selected by default"
+            help = "Id of playlist a. Users liked tracks are selected by default",
+            long_help = "Highly recommended that you run a fresh load on this playlist since this is considered the source"
         )]
         playlist_id_a: Option<String>,
         #[arg(

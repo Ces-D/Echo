@@ -43,6 +43,8 @@ pub async fn load_playlist_handler(
                                 }
                                 rspotify::model::PlayableItem::Episode(full_episode) => {
                                     println!("* {}", full_episode.name)
+                                    // TODO(CES): create a separate file for tracks data
+                                    // and another for episodes
                                 }
                             }
                         }

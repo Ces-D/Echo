@@ -53,7 +53,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
             cmp,
         } => {
             match handlers::compare_playlist::compare_playlist_handler(
-                client,
                 playlist_id_a,
                 playlist_id_b,
                 cmp,
