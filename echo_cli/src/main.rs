@@ -1,15 +1,15 @@
 use clap::Parser;
 use cli::{Cli, Commands};
 use colored::Colorize;
-use echo;
 use log::{error, info};
 use rspotify::prelude::OAuthClient;
 use std::error::Error;
 use std::io::Write;
 
 mod cli;
+mod error;
 mod handlers;
-mod store;
+mod spotify;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -21,8 +21,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     trace_builder.init();
 
-    let config = echo::spotify::client::read_config_from_env();
-    let client = echo::spotify::client::create_client(&config);
+    let config = spotify::client::read_config_from_env();
+    let client = spotify::client::create_client(&config);
 
     // Obtaining the access token
     let url = client.get_authorize_url(false).unwrap();

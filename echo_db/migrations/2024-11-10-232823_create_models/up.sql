@@ -1,6 +1,6 @@
 CREATE TABLE track (
   id SERIAL PRIMARY KEY,
-  spotify_id VARCHAR(255),
+  spotify_id VARCHAR(255) UNIQUE,
   name VARCHAR(255) NOT NULL,
   popularity SMALLINT,
   isrc VARCHAR(12) UNIQUE,
@@ -21,7 +21,7 @@ CREATE TABLE track (
 
 CREATE TABLE album (
   id SERIAL PRIMARY KEY,
-  spotify_id VARCHAR(255),
+  spotify_id VARCHAR(255) UNIQUE,
   name VARCHAR(255) NOT NULL,
   release_date DATE,
   record_label VARCHAR(255)
@@ -35,7 +35,7 @@ CREATE TABLE album_track (
 
 CREATE TABLE artist (
   id SERIAL PRIMARY KEY,
-  spotify_id VARCHAR(255),
+  spotify_id VARCHAR(255) UNIQUE,
   name VARCHAR(255) NOT NULL
 );
 
@@ -53,7 +53,7 @@ CREATE TABLE artist_track (
 
 CREATE TABLE playlist (
   id SERIAL PRIMARY KEY,
-  spotify_id VARCHAR(255),
+  spotify_id VARCHAR(255) UNIQUE,
   description VARCHAR(510),
   name VARCHAR(255),
   public BOOLEAN

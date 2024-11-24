@@ -1,16 +1,8 @@
-use echo::error::EchoError;
-use echo::spotify::models::EchoFullTrack;
-use futures::lock::Mutex;
+use crate::error::EchoError;
 use futures::TryStreamExt;
 use rspotify::model::PlaylistId;
 use rspotify::prelude::{BaseClient, OAuthClient};
 use rspotify::AuthCodeSpotify;
-use std::path::PathBuf;
-use std::sync::Arc;
-
-use crate::store::{open_stored_file, stored_file_path};
-
-use super::constants;
 
 /// Load all data regarding a specific playlist and write into a storage file. Returns the path of the storage file
 ///
@@ -18,28 +10,21 @@ use super::constants;
 pub async fn load_playlist_handler(
     client: AuthCodeSpotify,
     playlist_id: Option<String>,
-) -> Result<PathBuf, EchoError> {
-    let identifier = playlist_id
-        .clone()
-        .unwrap_or(constants::USERS_SAVED_TRACKS_STORE_FILE_PREFIX.to_string());
+) -> Result<(), EchoError> {
+    let db_conn = echo_db::connection::establish_connection();
+
     match playlist_id {
         Some(pid) => {
             let playlist_id = PlaylistId::from_uri(&pid)
                 .map_err(|error| EchoError::CliParamError(error.to_string()))?;
             let stream = client.playlist_items(playlist_id, None, None);
-            let stored_file = open_stored_file(&identifier, false, true)?;
-            let writer = Arc::new(Mutex::new(csv::Writer::from_writer(stored_file)));
             stream
                 .try_for_each_concurrent(10, |item| {
-                    let writer = Arc::clone(&writer);
-
                     async move {
-                        let mut writer = writer.lock().await;
                         if let Some(i) = item.track {
                             match i {
                                 rspotify::model::PlayableItem::Track(full_track) => {
                                     let record: EchoFullTrack = full_track.into();
-                                    writer.serialize(record).unwrap();
                                 }
                                 rspotify::model::PlayableItem::Episode(full_episode) => {
                                     println!("* {}", full_episode.name)
@@ -53,7 +38,7 @@ pub async fn load_playlist_handler(
                 })
                 .await
                 .unwrap();
-            return Ok(stored_file_path(&identifier).unwrap());
+            return Ok(());
         }
         None => {
             // Executing the futures concurrently
@@ -66,7 +51,7 @@ pub async fn load_playlist_handler(
                 })
                 .await
                 .unwrap();
-            return Ok(stored_file_path(&identifier).unwrap());
+            return Ok(());
         }
     }
 }

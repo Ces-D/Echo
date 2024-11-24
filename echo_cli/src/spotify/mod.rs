@@ -11,4 +11,3 @@ pub const TEST_PLAYLIST_DESCRIPTION: &str =
     "A test playlist used for program. Will contain random music and episodes";
 
 pub mod client;
-pub mod models;

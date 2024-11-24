@@ -1,5 +1,4 @@
 /target
-/run.sh
 .sqllsrc.json
 .env.local
 .env
