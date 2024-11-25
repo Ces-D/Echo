@@ -69,6 +69,7 @@ diesel::table! {
         id -> Int4,
         #[max_length = 255]
         spotify_id -> Nullable<Varchar>,
+        spotify_added_at -> Nullable<Timestamp>,
         #[max_length = 255]
         name -> Varchar,
         popularity -> Nullable<Int2>,

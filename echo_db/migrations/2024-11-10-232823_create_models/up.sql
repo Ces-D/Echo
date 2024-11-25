@@ -1,6 +1,7 @@
 CREATE TABLE track (
   id SERIAL PRIMARY KEY,
   spotify_id VARCHAR(255) UNIQUE,
+  spotify_added_at TIMESTAMP,
   name VARCHAR(255) NOT NULL,
   popularity SMALLINT,
   isrc VARCHAR(12) UNIQUE,
