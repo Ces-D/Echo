@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(version, about="A tool to manipulate your Spotify music", long_about = None)]
@@ -15,50 +15,34 @@ pub enum Commands {
     #[command(
         about = "Either create a public replica of your Starred Music or update the current existing replica"
     )]
-    LikedPlaylist,
+    Liked,
 
     #[command(about = "Load all the data about a specific playlist")]
-    LoadPlaylist {
+    Load {
         #[arg(
             short,
             long,
-            help = "Id of playlist. Users liked tracks are selected by default"
+            help = "Id of playlist. Users liked tracks are selected by default",
+            default_missing_value = None,
+            required = false
         )]
         playlist_id: Option<String>,
     },
 
-    #[command(about = "Compare the data between two specific playlists")]
-    ComparePlaylist {
+    #[command(about = "Retrieve details on all the loaded playlists")]
+    Loaded,
+
+    Generate {
         #[arg(
-            short = 'a',
+            short,
             long,
-            help = "Id of playlist a. Users liked tracks are selected by default",
-            long_help = "Highly recommended that you run a fresh load on this playlist since this is considered the source"
+            help = "Describe what kind of filtering this playlist will consider when generating the playlist",
+            long_help = "Ex. 'only tracks that are not in the original playlist and are from the 80s' or 'copy the original playlist' or 'only songs that will make me dance'. The tracks will be read from the playlists that have been loaded.",
+            required = true
         )]
-        playlist_id_a: Option<String>,
-        #[arg(
-            short = 'b',
-            long,
-            help = "Id of playlist b. Users liked tracks are selected by default"
-        )]
-        playlist_id_b: Option<String>,
-        #[arg(short, long, help = "Method for comparing the playlists", default_value_t=PlaylistCmp::TrackItems)]
-        cmp: PlaylistCmp,
+        prompt: String,
     },
 
     #[command(about = "Search your playlists for something specific")]
-    FindPlaylist { name: String },
-}
-
-#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PlaylistCmp {
-    TrackItems,
-}
-impl std::fmt::Display for PlaylistCmp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_possible_value()
-            .expect("no values are skipped")
-            .get_name()
-            .fmt(f)
-    }
+    Find { name: String },
 }

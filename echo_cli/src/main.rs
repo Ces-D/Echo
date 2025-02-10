@@ -3,6 +3,7 @@ use cli::{Cli, Commands};
 use colored::Colorize;
 use log::{error, info};
 use rspotify::prelude::OAuthClient;
+use rspotify::AuthCodeSpotify;
 use std::error::Error;
 use std::io::Write;
 
@@ -10,6 +11,20 @@ mod cli;
 mod error;
 mod handlers;
 mod spotify;
+
+async fn prepare_spotify_client() -> AuthCodeSpotify {
+    let config = spotify::client::read_config_from_env();
+    let client = spotify::client::create_client(&config);
+
+    // Obtaining the access token
+    let url = client.get_authorize_url(false).unwrap();
+    // This function requires the `cli` feature enabled.
+    client
+        .prompt_for_token(&url)
+        .await
+        .expect("Couln't authenticate successfully");
+    client
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -21,59 +36,51 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     trace_builder.init();
 
-    let config = spotify::client::read_config_from_env();
-    let client = spotify::client::create_client(&config);
-
-    // Obtaining the access token
-    let url = client.get_authorize_url(false).unwrap();
-    // This function requires the `cli` feature enabled.
-    client
-        .prompt_for_token(&url)
-        .await
-        .expect("Couln't authenticate successfully");
-
     match app.command {
-        Commands::LikedPlaylist => todo!(),
+        Commands::Liked => todo!(),
 
-        Commands::LoadPlaylist { playlist_id } => {
+        Commands::Load { playlist_id } => {
+            let client = prepare_spotify_client().await;
             match handlers::load_playlist::load_playlist_handler(client, playlist_id).await {
-                Ok(success) => {
-                    info!(
-                        "The playlist has been completely loaded. You can view the data here: {}",
-                        success.to_str().unwrap()
-                    )
+                Ok(_) => {
+                    info!("The playlist has been completely loaded")
                 }
                 Err(error) => error!("{}", error),
             }
         }
 
-        Commands::ComparePlaylist {
-            playlist_id_a,
-            playlist_id_b,
-            cmp,
-        } => {
-            match handlers::compare_playlist::compare_playlist_handler(
-                playlist_id_a,
-                playlist_id_b,
-                cmp,
-            )
-            .await
-            {
-                Ok(success) => {
-                    info!("The playlist comparison has completed. You can view the data here:",);
-                    let stdout = std::io::stdout(); // get the global stdout entity
-                    let mut handle = stdout.lock(); // acquire a lock on it
-
-                    writeln!(handle, "{}", success.to_str().unwrap().on_bright_red())?;
+        Commands::Loaded => {
+            match handlers::loaded_playlists::loaded_playlists_handler().await {
+                Ok(playlists) => {
+                    if playlists.is_empty() {
+                        info!("No playlists have been loaded")
+                    } else {
+                        info!("Loaded Playlists: {}", playlists.len());
+                        let stdout = std::io::stdout(); // get the global stdout entity
+                        let mut handle = stdout.lock(); // acquire a lock on it
+                        for playlist in playlists {
+                            writeln!(
+                                handle,
+                                "{:<10}{}",
+                                "Name".green(),
+                                playlist.name.unwrap_or(String::from("N/A"))
+                            )?;
+                            writeln!(handle, "{:<10}{}", "Public".green(), playlist.public)?;
+                            writeln!(handle, "{:<10}{}", "Track #".green(), playlist.total_tracks)?;
+                            writeln!(handle, "{:<10}{}", "Id".green(), playlist.id)?;
+                            writeln!(handle, " ")?;
+                        }
+                    }
                 }
                 Err(error) => error!("{}", error),
             }
         }
 
-        Commands::FindPlaylist { name } => {
+        Commands::Find { name } => {
+            let client = prepare_spotify_client().await;
             match handlers::find_playlist::find_playlist_handler(client, name).await {
                 Ok(summarized_playlists) => {
-                    if summarized_playlists.len() == 0 {
+                    if summarized_playlists.is_empty() {
                         info!("Did not find a single match")
                     } else {
                         info!("Found Several Matches: {}", summarized_playlists.len());
@@ -84,12 +91,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             writeln!(handle, "{:<10}{}", "Public".green(), playlist.public)?;
                             writeln!(handle, "{:<10}{}", "Track #".green(), playlist.total)?;
                             writeln!(handle, "{:<10}{}", "Id".green(), playlist.id)?;
-                            writeln!(handle, "")?;
+                            writeln!(handle, " ")?;
                         }
                     }
                 }
                 Err(error) => error!("{}", error),
             }
+        }
+
+        Commands::Generate { prompt } => {
+            let client = prepare_spotify_client().await;
+            todo!();
         }
     }
     Ok(())

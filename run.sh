@@ -16,29 +16,34 @@ migrate_dw(){
 }
 
 test_help() {
-  ./target/debug/echo -h
+  ./target/debug/echo_cli -h
 }
 
 #### FIND A PLAYLIST
 test_help_find_playlist(){
-  ./target/debug/echo find-playlist -h
+  ./target/debug/echo_cli find -h
 }
 find_playlist(){
-  ./target/debug/echo find-playlist "Sa"
+  ./target/debug/echo_cli find "Sa"
 }
 
 #### LOAD A PLAYLIST
 test_help_load_playlist(){
-  ./target/debug/echo load-playlist -h
+  ./target/debug/echo_cli load -h
 }
 load_playlist(){
-# 1z0FnFhsSKP0rqNvNqc30c All The Small Things Playlist id
-  ./target/debug/echo load-playlist -p "spotify:playlist:0pDotXuIfBJpmZfUQ9zFfx" -t
+    local playlist_id="$2"
+    if [ -z playlist_id ]; then
+    ./target/debug/echo_cli load -t
+    else
+    echo "here $playlist_id"
+    ./target/debug/echo_cli load -p playlist_id -t
+    fi
 }
 
-#### COMPARE TWO PLAYLISTS
-test_help_compare_playlist(){
-  ./target/debug/echo compare-playlist -h
+#### LOAD A PLAYLIST
+loaded_playlists(){
+  ./target/debug/echo_cli loaded
 }
 
 
@@ -59,9 +64,9 @@ elif [ "$1" == "test_help_load_playlist" ]; then
   test_help_load_playlist
 elif [ "$1" == "load_playlist" ]; then
   load_playlist
-elif [ "$1" == "test_help_compare_playlist" ]; then
-  test_help_compare_playlist
+elif [ "$1" == "loaded_playlists" ]; then
+  loaded_playlists
 else
   echo "Invalid Command"
+  echo "Usage: ./run.sh setup|migrate_up|migrate_dw|test_help|test_help_find_playlist|find_playlist|test_help_load_playlist|load_playlist|loaded_playlists"
 fi
-

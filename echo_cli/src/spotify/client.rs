@@ -1,9 +1,4 @@
-use rspotify::{AuthCodeSpotify, Credentials, OAuth};
-
-pub struct RedirectCredentials {
-    pub auth_code: String,
-    pub csrf_token: String,
-}
+use rspotify::{AuthCodeSpotify, Config, Credentials, OAuth};
 
 pub struct SpotifyConfig {
     pub redirect_port: String,
@@ -14,9 +9,6 @@ pub struct SpotifyConfig {
 impl SpotifyConfig {
     pub fn redirect_as_uri(&self) -> String {
         format!("http://localhost:{}", self.redirect_port)
-    }
-    pub fn redirect_as_addr(&self) -> String {
-        format!("127.0.0.1:{}", self.redirect_port)
     }
 }
 
@@ -44,6 +36,11 @@ pub fn create_client(config: &SpotifyConfig) -> AuthCodeSpotify {
         scopes,
         ..OAuth::default()
     };
+    let config = Config {
+        token_refreshing: true,
+        token_cached: true,
+        ..Config::default()
+    };
 
-    AuthCodeSpotify::new(creds, oauth)
+    AuthCodeSpotify::with_config(creds, oauth, config)
 }

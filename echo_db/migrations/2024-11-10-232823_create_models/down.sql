@@ -1,12 +1,6 @@
 DROP TABLE track CASCADE;
 
-DROP TABLE album CASCADE;
-
-DROP TABLE album_track CASCADE;
-
 DROP TABLE artist CASCADE;
-
-DROP TABLE artist_album CASCADE;
 
 DROP TABLE artist_track CASCADE;
 

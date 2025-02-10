@@ -1,11 +1,13 @@
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
 
-use echo::error::EchoError;
-use echo::spotify::SPOTIFY_PLAYLISTS_LIMIT;
+use futures::TryStreamExt;
 use log::{debug, trace};
+use rspotify::model::SimplifiedPlaylist;
 use rspotify::prelude::OAuthClient;
 use rspotify::AuthCodeSpotify;
+
+use crate::error::EchoError;
 
 #[derive(Clone)]
 pub struct SummarizedPlaylist {
@@ -20,19 +22,19 @@ pub async fn find_playlist_handler(
     name: String,
 ) -> Result<Vec<SummarizedPlaylist>, EchoError> {
     let playlists = client
-        .current_user_playlists_manual(Some(SPOTIFY_PLAYLISTS_LIMIT), Some(0))
-        .await
-        .map_err(|error| EchoError::ClientRequestError(error.to_string()))?;
+        .current_user_playlists()
+        .try_collect::<Vec<SimplifiedPlaylist>>()
+        .await?;
 
     let mut metadata: HashMap<String, SummarizedPlaylist> = HashMap::default();
-    for item in playlists.items {
+    for item in playlists {
         trace!("Adding {} to metadata", item.name);
         metadata.insert(
             item.name.clone(),
             SummarizedPlaylist {
                 name: item.name,
                 total: item.tracks.total,
-                public: item.public.is_some_and(|x| x == true),
+                public: item.public.is_some_and(|x| x),
                 id: item.id.to_string(),
             },
         );

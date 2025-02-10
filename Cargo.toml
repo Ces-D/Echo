@@ -1,3 +1,3 @@
 [workspace]
 
-members = ["echo_cli", "echo_db"]
+members = ["echo_cli", "echo_config", "echo_db"]
