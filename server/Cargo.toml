@@ -1,0 +1,12 @@
+[package]
+name = "echo"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+actix-web = "4.9.0"
+diesel = { version = "2.2.7", features = ["postgres", "r2d2"] }
+rspotify = "0.14.0"

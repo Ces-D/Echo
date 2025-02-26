@@ -1,0 +1,6 @@
+CREATE TABLE person (
+  id SERIAL PRIMARY KEY,
+  spotify_id VARCHAR(255) UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+);
