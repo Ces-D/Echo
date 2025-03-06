@@ -4,9 +4,9 @@ diesel::table! {
     person (id) {
         id -> Int4,
         #[max_length = 255]
-        spotify_id -> Nullable<Varchar>,
+        spotify_id -> Varchar,
         #[max_length = 255]
-        name -> Varchar,
+        name -> Nullable<Varchar>,
         updated_at -> Timestamptz,
     }
 }

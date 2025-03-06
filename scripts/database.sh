@@ -31,4 +31,6 @@ elif [ "$1" == "new_migration" ]; then
 else
   echo "Invalid Command"
   echo "Usage: ./scripts/database.sh [setup|migrate_up|migrate_dw|new_migration]"
+  echo "This script is intended to be run directly from the root directory of the project."
+  echo "It is assumed that you have postgres and diesel-cli installed locally on your machine"
 fi
