@@ -7,7 +7,7 @@ use crate::client;
 use crate::shared::errors::http_spotify_client_error;
 use crate::shared::{crypto::decrypt_token, types::DbPool};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::OpenApi)]
 pub struct CompleteUser {
     pub id: i32,
     pub spotify_id: String,

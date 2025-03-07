@@ -5,7 +5,7 @@ use crate::shared::{errors::http_spotify_client_error, types::DbPool};
 use actix_web::{web::Json, HttpRequest, Result};
 use rspotify::prelude::{BaseClient, OAuthClient};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::OpenApi)]
 pub struct SpotifyAuthUrlResponse {
     url: String,
 }
@@ -17,7 +17,7 @@ pub async fn generate_spotify_request_url() -> Result<Json<SpotifyAuthUrlRespons
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::OpenApi)]
 pub struct SpotifyTokenResponse {
     token: rspotify::model::Token,
 }

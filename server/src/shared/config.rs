@@ -6,6 +6,8 @@ pub enum Environment {
     SpotifyClientSecret,
     SpotifyRedirectUri,
     HashKey,
+    BaseUrl,
+    BaseServerPort,
 }
 
 impl Display for Environment {
@@ -15,7 +17,9 @@ impl Display for Environment {
             Environment::SpotifyClientId => write!(f, "SPOTIFY_CLIENT_ID"),
             Environment::SpotifyClientSecret => write!(f, "SPOTIFY_CLIENT_SECRET"),
             Environment::SpotifyRedirectUri => write!(f, "SPOTIFY_REDIRECT_URI"),
-            Environment::HashKey => write!(f, "HashKey"),
+            Environment::HashKey => write!(f, "HASH_KEY"),
+            Environment::BaseUrl => write!(f, "BASE_URL"),
+            Environment::BaseServerPort => write!(f, "BASE_SERVER_PORT"),
         }
     }
 }

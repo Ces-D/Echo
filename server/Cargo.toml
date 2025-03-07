@@ -6,13 +6,19 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
+[[bin]]
+path = "src/main.rs"
+name = "echo"
+
 [dependencies]
 actix-web = "4.9.0"
 actix-web-httpauth = "0.8.2"
 aes-gcm = "0.10.3"
 chrono = { version = "0.4.40", features = ["serde"] }
 derive_more = { version = "2.0.1", features = ["debug", "display", "error"] }
-diesel = { version = "2.2.7", features = ["postgres", "r2d2", "chrono"] }
+diesel = { version = "2.2.8", features = ["postgres", "r2d2", "chrono"] }
+env_logger = "0.11.6"
 hex = "0.4.3"
 rspotify = "0.14.0"
 serde = { version = "1.0.218", features = ["derive"] }
+utoipa = { version = "5.3.1", features = ["actix_extras"] }
