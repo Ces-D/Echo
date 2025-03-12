@@ -8,6 +8,7 @@ pub enum Environment {
     HashKey,
     BaseUrl,
     BaseServerPort,
+    SessionCookieKey,
 }
 
 impl Display for Environment {
@@ -20,6 +21,7 @@ impl Display for Environment {
             Environment::HashKey => write!(f, "HASH_KEY"),
             Environment::BaseUrl => write!(f, "BASE_URL"),
             Environment::BaseServerPort => write!(f, "BASE_SERVER_PORT"),
+            Environment::SessionCookieKey => write!(f, "SESSION_COOKIE_KEY"),
         }
     }
 }

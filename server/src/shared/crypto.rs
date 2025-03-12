@@ -2,6 +2,7 @@ use super::{
     config::{get_env_var, Environment},
     errors::{http_aes_gcm_error, http_hex_error},
 };
+use actix_web::cookie::Cookie;
 use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit, OsRng},
     Aes256Gcm, Key, Nonce,
@@ -43,7 +44,7 @@ fn decrypt(data: String) -> actix_web::Result<String> {
 }
 
 // Encrypt the spotify access_token and refresh_token
-pub fn encrypt_token(token: rspotify::Token) -> rspotify::Token {
+fn encrypt_token(token: rspotify::Token) -> rspotify::Token {
     match token.refresh_token {
         Some(refresh_token) => rspotify::Token {
             access_token: encrypt(token.access_token),
@@ -58,10 +59,38 @@ pub fn encrypt_token(token: rspotify::Token) -> rspotify::Token {
 }
 
 // Decrypt the spotify access_token and refresh_token
-pub fn decrypt_token(token: String) -> actix_web::Result<rspotify::Token> {
-    let access_token = decrypt(token)?;
-    Ok(rspotify::Token {
-        access_token,
-        ..rspotify::Token::default()
-    })
+fn decrypt_token(token: rspotify::Token) -> actix_web::Result<rspotify::Token> {
+    let access_token = decrypt(token.access_token)?;
+    let decrypted_token = match token.refresh_token {
+        Some(refresh_token) => rspotify::Token {
+            access_token,
+            refresh_token: Some(decrypt(refresh_token)?),
+            ..token
+        },
+        None => rspotify::Token {
+            access_token,
+            ..token
+        },
+    };
+    Ok(decrypted_token)
+}
+
+// Create an encrypted session cookie
+pub fn create_session_cookie<'a>(token: rspotify::Token) -> Cookie<'a> {
+    let cookie_key = get_env_var(Environment::SessionCookieKey);
+    let encrypted_token = encrypt_token(token);
+    let token_str = serde_json::to_string(&encrypted_token).expect("failed to serialize token");
+    Cookie::build(cookie_key, token_str)
+        .domain(get_env_var(Environment::BaseUrl))
+        .secure(true)
+        .http_only(true)
+        .expires(actix_web::cookie::Expiration::Session)
+        .finish()
+}
+
+pub fn decrypt_session_cookie<'a>(cookie: Cookie<'a>) -> rspotify::Token {
+    let token_str = cookie.value();
+    let token: rspotify::Token =
+        serde_json::from_str(token_str).expect("failed to deserialize token");
+    decrypt_token(token).expect("failed to decrypt token")
 }

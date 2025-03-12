@@ -1,26 +1,30 @@
-use actix_web::{dev::ServiceRequest, Result};
-use actix_web::{web, App, HttpServer};
-use actix_web_httpauth::extractors::bearer::BearerAuth;
-
-use actix_web_httpauth::middleware::HttpAuthentication;
+use actix_web::{
+    body::MessageBody,
+    dev::{ServiceRequest, ServiceResponse},
+    middleware::{from_fn, Next},
+    web, App, Error, HttpServer, Result,
+};
 
 mod client;
 mod schema;
 mod service;
 mod shared;
 
-async fn authorization_middleware(
+async fn authorizaton_required(
     req: ServiceRequest,
-    credentials: BearerAuth,
-) -> Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
-    let bearer_token = credentials.token();
-    if bearer_token.is_empty() {
-        Err((
-            actix_web::error::ErrorUnauthorized("Authorization not provided"),
-            req,
-        ))
-    } else {
-        Ok(req)
+    next: Next<impl MessageBody>,
+) -> Result<ServiceResponse<impl MessageBody>, Error> {
+    let cookie_key = shared::config::get_env_var(shared::config::Environment::SessionCookieKey);
+    match req.cookie(&cookie_key) {
+        Some(cookie) => {
+            let token = shared::crypto::decrypt_session_cookie(cookie);
+            if token.is_expired() {
+                return Err(actix_web::error::ErrorUnauthorized("Unauthorized"));
+            } else {
+                next.call(req).await
+            }
+        }
+        None => Err(actix_web::error::ErrorUnauthorized("Unauthorized")),
     }
 }
 
@@ -56,11 +60,15 @@ pub async fn run() -> std::io::Result<()> {
                     .route(
                         "/spotify/callback",
                         web::get().to(service::auth::parse_spotify_response_url),
+                    )
+                    .route(
+                        "/authorization_valid",
+                        web::get().to(service::auth::authorization_valid),
                     ),
             )
             .service(
                 web::scope("/v1")
-                    .wrap(HttpAuthentication::bearer(authorization_middleware))
+                    .wrap(from_fn(authorizaton_required))
                     .route(
                         "/current_user",
                         web::get().to(service::user::get_complete_current_user),
