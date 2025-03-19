@@ -1,9 +1,6 @@
-use actix_web::{
-    body::MessageBody,
-    dev::{ServiceRequest, ServiceResponse},
-    middleware::{from_fn, Next},
-    web, App, Error, HttpServer, Result,
-};
+use actix_web::{dev::ServiceRequest, web::Data, App, HttpServer, Result};
+use actix_web_httpauth::{extractors::bearer::BearerAuth, middleware::HttpAuthentication};
+use apistos::{app::OpenApiWrapper, web};
 
 mod client;
 mod schema;
@@ -12,39 +9,37 @@ mod shared;
 
 async fn authorizaton_required(
     req: ServiceRequest,
-    next: Next<impl MessageBody>,
-) -> Result<ServiceResponse<impl MessageBody>, Error> {
-    let cookie_key = shared::config::get_env_var(shared::config::Environment::SessionCookieKey);
-    match req.cookie(&cookie_key) {
-        Some(cookie) => {
-            let token = shared::crypto::decrypt_session_cookie(cookie);
-            if token.is_expired() {
-                return Err(actix_web::error::ErrorUnauthorized("Unauthorized"));
-            } else {
-                next.call(req).await
-            }
-        }
-        None => Err(actix_web::error::ErrorUnauthorized("Unauthorized")),
+    credentials: BearerAuth,
+) -> Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
+    match shared::crypto::decrypt_session_token(credentials.token()) {
+        Ok(_) => Ok(req),
+        Err(_) => Err((
+            actix_web::error::ErrorUnauthorized("Incorrect authorization"),
+            req,
+        )),
     }
 }
 
 pub async fn run() -> std::io::Result<()> {
-    let base_url = shared::config::get_env_var(shared::config::Environment::BaseUrl);
-    let server_port = shared::config::get_env_var(shared::config::Environment::BaseServerPort)
-        .parse::<u16>()
-        .expect("Server port should by a number");
+    let bind_address = shared::config::get_env_var(shared::config::Environment::BindAddress);
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let database_pool = client::database_pool();
 
     HttpServer::new(move || {
+        let api_spec = shared::config::create_api_spec();
+        let cors = shared::config::create_cors();
+
         App::new()
+            // ~~~ API Spec
+            .document(api_spec)
             // ~~~ App data
-            .app_data(web::Data::new(database_pool.clone()))
-            // ~~~ Middleware
+            .app_data(Data::new(database_pool.clone()))
+            // ~~~ Global Middleware
             .wrap(actix_web::middleware::Compress::default())
             .wrap(actix_web::middleware::Logger::default())
+            .wrap(cors)
             // ~~~ Routes
             .route(
                 "/health_check",
@@ -60,22 +55,19 @@ pub async fn run() -> std::io::Result<()> {
                     .route(
                         "/spotify/callback",
                         web::get().to(service::auth::parse_spotify_response_url),
-                    )
-                    .route(
-                        "/authorization_valid",
-                        web::get().to(service::auth::authorization_valid),
                     ),
             )
             .service(
                 web::scope("/v1")
-                    .wrap(from_fn(authorizaton_required))
+                    .wrap(HttpAuthentication::bearer(authorizaton_required))
                     .route(
                         "/current_user",
                         web::get().to(service::user::get_complete_current_user),
                     ),
             )
+            .build("/openapi.json")
     })
-    .bind((base_url.as_str(), server_port))?
+    .bind(bind_address)?
     .run()
     .await
 }

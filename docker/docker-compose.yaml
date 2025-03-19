@@ -1,0 +1,43 @@
+name: echo 
+services:
+  server:
+    image: echo_server:latest
+    build:
+      context: ../server/
+      dockerfile: ../docker/server.Dockerfile
+    ports:
+      - "8080:8080" # Adjust if your Actix Web server listens on a different port
+    depends_on:
+      - db
+    env_file:
+      - ../.env
+    networks:
+      - shared
+  web:
+    image: echo_www:latest
+    build:
+      context: ../www/
+      dockerfile: ../docker/www.Dockerfile
+    ports:
+      - "3000:3000" # Adjust if your Next.js app uses a different port
+    env_file:
+      - ../.env
+    depends_on:
+      - server
+      - db
+    networks:
+      - shared
+  db:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    env_file:
+      - ../.env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - shared
+networks:
+  shared:
+volumes:
+  db_data:

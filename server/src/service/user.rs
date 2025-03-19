@@ -1,32 +1,31 @@
-use actix_web::{web::Json, HttpRequest, Result};
-use rspotify::model::user::PrivateUser;
+use actix_web::{http::header::Header, web::Json, HttpRequest, Result};
+use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use rspotify::prelude::OAuthClient;
 
 use crate::shared::{
-    config::{get_env_var, Environment},
-    crypto::decrypt_session_cookie,
-    errors::http_spotify_client_error,
-    types::DbPool,
+    crypto::decrypt_session_token, errors::http_spotify_client_error, types::DbPool,
 };
 use crate::{client, shared};
 
-#[derive(serde::Serialize, serde::Deserialize, utoipa::OpenApi)]
+#[derive(
+    serde::Serialize, serde::Deserialize, Debug, Clone, schemars::JsonSchema, apistos::ApiComponent,
+)]
 pub struct CompleteUser {
     pub id: i32,
     pub spotify_id: String,
     pub name: Option<String>,
-    pub spotify: PrivateUser,
+    pub spotify: crate::shared::types::SpotifyPrivateUser,
 }
 
+#[apistos::api_operation()]
 pub async fn get_complete_current_user(
     req: HttpRequest,
     pool: actix_web::web::Data<DbPool>,
 ) -> Result<Json<CompleteUser>> {
-    let cookie = req
-        .cookie(&get_env_var(Environment::SessionCookieKey))
-        .unwrap();
-    let token = decrypt_session_cookie(cookie);
-    let client = client::spotify_client(Some(token));
+    let credentials = Authorization::<Bearer>::parse(&req)?;
+    let bearer = credentials.as_ref();
+    let token = decrypt_session_token(bearer.token())?;
+    let client = client::spotify_client(Some(token), None);
 
     let spotify_user = client
         .current_user()
@@ -45,6 +44,6 @@ pub async fn get_complete_current_user(
         id: db_user.id,
         spotify_id: db_user.spotify_id,
         name: db_user.name,
-        spotify: spotify_user,
+        spotify: spotify_user.into(),
     }))
 }

@@ -1,29 +1,43 @@
 use crate::client::{pg::create_new_user, spotify_client};
 use crate::shared;
 use crate::shared::config::{get_env_var, Environment};
-use crate::shared::crypto::{create_session_cookie, decrypt_session_cookie};
+use crate::shared::crypto::create_session_cookie;
 use crate::shared::{errors::http_spotify_client_error, types::DbPool};
 
-use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{web::Json, HttpRequest, Responder, Result};
 use rspotify::prelude::{BaseClient, OAuthClient};
 
-#[derive(serde::Serialize, serde::Deserialize, utoipa::OpenApi)]
+#[derive(
+    serde::Serialize, serde::Deserialize, Debug, Clone, schemars::JsonSchema, apistos::ApiComponent,
+)]
 pub struct SpotifyAuthUrlResponse {
     url: String,
 }
+
+#[apistos::api_operation()]
 pub async fn generate_spotify_request_url() -> Result<Json<SpotifyAuthUrlResponse>> {
-    let client = spotify_client(None);
+    let client = spotify_client(None, None);
     match client.get_authorize_url(true) {
         Ok(url) => Ok(Json(SpotifyAuthUrlResponse { url })),
         Err(client_error) => Err(http_spotify_client_error(client_error)),
     }
 }
 
+#[derive(
+    serde::Serialize, serde::Deserialize, Debug, Clone, schemars::JsonSchema, apistos::ApiComponent,
+)]
+pub struct ParseSpotifyResponseUrlQueries {
+    pub state: String,
+    pub code: String,
+}
+
+#[apistos::api_operation()]
 pub async fn parse_spotify_response_url(
-    req: HttpRequest,
+    query: actix_web::web::Query<ParseSpotifyResponseUrlQueries>,
     pool: actix_web::web::Data<DbPool>,
+    req: HttpRequest,
 ) -> impl Responder {
-    let client = spotify_client(None);
+    let client = spotify_client(None, Some(query.state.clone()));
     let code = match client.parse_response_code(req.full_url().as_str()) {
         Some(code) => code,
         None => {
@@ -58,7 +72,7 @@ pub async fn parse_spotify_response_url(
     let stored_token = client.get_token();
     let locked = stored_token.lock().await.unwrap();
     // create session id and somehow use that to get this cookie
-    match locked.clone() {
+    let cookie = match locked.clone() {
         Some(token) => create_session_cookie(token),
         None => {
             return Err(actix_web::error::ErrorBadRequest(
@@ -67,23 +81,17 @@ pub async fn parse_spotify_response_url(
         }
     };
 
-    Ok(HttpResponse::Ok())
+    Ok(actix_web::HttpResponse::TemporaryRedirect()
+        .insert_header(("location", get_env_var(Environment::ClientUrl)))
+        .cookie(cookie)
+        .finish())
 }
 
-#[derive(serde::Serialize, serde::Deserialize, utoipa::OpenApi)]
+#[derive(
+    serde::Serialize, serde::Deserialize, Debug, Clone, schemars::JsonSchema, apistos::ApiComponent,
+)]
 pub struct AuthorizationValidResponse {
     valid: bool,
-}
-
-pub async fn authorization_valid(req: HttpRequest) -> Result<Json<AuthorizationValidResponse>> {
-    let valid = match req.cookie(&get_env_var(Environment::SessionCookieKey)) {
-        Some(cookie) => {
-            let token = decrypt_session_cookie(cookie);
-            !token.is_expired()
-        }
-        None => false,
-    };
-    Ok(Json(AuthorizationValidResponse { valid }))
 }
 
 #[cfg(test)]

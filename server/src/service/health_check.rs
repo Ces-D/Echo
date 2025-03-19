@@ -1,5 +1,6 @@
 use actix_web::{HttpResponse, Responder};
 
+#[apistos::api_operation()]
 pub async fn health_check() -> impl Responder {
     HttpResponse::Ok()
 }

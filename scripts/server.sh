@@ -5,7 +5,7 @@ test(){
 }
 
 build(){
-  cd ./server/ && cargo build
+  cd ./server/ && cargo build --release
 }
 
 run(){

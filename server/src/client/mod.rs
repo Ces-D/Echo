@@ -5,7 +5,10 @@ use diesel::PgConnection;
 pub mod pg;
 
 /// Creates a new Spotify client with the provided token, or without one if none is given.
-pub fn spotify_client(token: Option<rspotify::Token>) -> rspotify::AuthCodeSpotify {
+pub fn spotify_client(
+    token: Option<rspotify::Token>,
+    oauth_state: Option<String>,
+) -> rspotify::AuthCodeSpotify {
     let client_id = config::get_env_var(config::Environment::SpotifyClientId);
     let client_secret = config::get_env_var(config::Environment::SpotifyClientSecret);
     let redirect_uri = config::get_env_var(config::Environment::SpotifyRedirectUri);
@@ -22,10 +25,18 @@ pub fn spotify_client(token: Option<rspotify::Token>) -> rspotify::AuthCodeSpoti
         "playlist-modify-public"
     );
 
-    let oauth = rspotify::OAuth {
-        redirect_uri,
-        scopes,
-        ..rspotify::OAuth::default()
+    let oauth = match oauth_state {
+        Some(s) => rspotify::OAuth {
+            redirect_uri,
+            scopes,
+            state: s,
+            ..rspotify::OAuth::default()
+        },
+        None => rspotify::OAuth {
+            redirect_uri,
+            scopes,
+            ..rspotify::OAuth::default()
+        },
     };
 
     let config = rspotify::Config {
