@@ -1,5 +1,8 @@
-import AuthorizationButton from "./_components/AuthorizationButton";
+import { Suspense } from "react";
+
 import { getAuthorizationAccessToken } from "@/utils";
+
+import AuthorizationButton from "./_components/AuthorizationButton";
 import HelloUserHeading from "./_components/HelloUserHeading";
 
 export default async function Home() {
@@ -7,7 +10,9 @@ export default async function Home() {
 
   return (
     <div>
-      {accessToken && <HelloUserHeading accessToken={accessToken} />}
+      <Suspense>
+        {accessToken && <HelloUserHeading accessToken={accessToken} />}
+      </Suspense>
       <AuthorizationButton accessToken={accessToken} />
     </div>
   );

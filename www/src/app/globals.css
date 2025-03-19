@@ -1,26 +1,102 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --background: "#FFFFFF"; /* Pure White */
+  --secondary-background: "#F2F2F2"; /* Light Gray */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Primary Accents */
+  --accent-green: "#1DB954"; /* Spotify Green */
+  --accent-red: "#FF0000"; /* YouTube Red */
+
+  /* Text & UI Elements */
+  --text-primary: "#121212"; /* Deep Black */
+  --text-secondary: "#4D4D4D"; /* Dark Gray for readability */
+  --button-hover: "#1AA34A"; /* Slightly darker Spotify Green */
+  --border-gray: "#D9D9D9"; /* Soft Gray for Borders */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: "#121212"; /* Deep Black (Spotify) */
+    --secondary-background: "#181818"; /* Dark Gray (Spotify) */
+
+    /* Text & UI Elements */
+    --text-primary: "#FFFFFF"; /* Bright White (YouTube Influence) */
+    --text-secondary: "#D9D9D9"; /* Dimmed White */
+    --button-hover: "#1ED760"; /* Hover Green (Spotify) */
+    --border-gray: "#282828"; /* Rich Gray (UI Borders) */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme {
+  /* Colors */
+  --color-*: initial;
+
+  /* Font Size */
+  --text-*: initial;
+  --text-sm: clamp(0.6875rem, 0.6528rem + 0.1852vw, 0.875rem);
+  --text-md: clamp(0.9375rem, 0.9028rem + 0.1852vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 0.8935rem + 1.2346vw, 2.375rem);
+  --text-xl: clamp(1.25rem, 0.9259rem + 1.7284vw, 3rem);
+  --text-2xl: clamp(1.5625rem, 1.2384rem + 1.7284vw, 3.3125rem);
+
+  /* Screen Size */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+@theme inline {
+  /* Colors */
+  --color-background: var(--background);
+  --color-secondary-background: var(--secondary-background);
+  --color-accent-green: var(--accent-green);
+  --color-accent-red: var(--accent-red);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-button-hover: var(--button-hover);
+  --color-border-gray: var(--border-gray);
+}
+
+@layer base {
+  code,
+  input,
+  textarea,
+  p {
+    font-size: var(--text-md);
+    font-weight: var(--font-weight-normal);
+  }
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+  }
+  h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-thin);
+  }
+  h3 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-normal);
+  }
+  h4 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+  }
+  h5 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-thin);
+  }
+
+  input,
+  button,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    color: var(--text-primary);
+  }
 }

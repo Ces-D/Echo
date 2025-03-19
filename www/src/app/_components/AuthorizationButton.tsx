@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 type AuthorizationButtonProps = {
   accessToken: AccessToken;
 };
-
 export default function AuthorizationButton({
   accessToken,
 }: AuthorizationButtonProps) {
