@@ -1,9 +1,12 @@
 import { Suspense } from "react";
 
-import { getAuthorizationAccessToken } from "@/utils";
+import { getAuthorizationAccessToken } from "@/lib/server/utils";
+import { pageMetadata } from "@/lib/utils";
 
-import AuthorizationButton from "./_components/AuthorizationButton";
+import { AuthButton } from "./_components/AuthButton";
 import HelloUserHeading from "./_components/HelloUserHeading";
+
+export const metadata = pageMetadata({});
 
 export default async function Home() {
   const accessToken = await getAuthorizationAccessToken();
@@ -13,7 +16,11 @@ export default async function Home() {
       <Suspense>
         {accessToken && <HelloUserHeading accessToken={accessToken} />}
       </Suspense>
-      <AuthorizationButton accessToken={accessToken} />
+      <video autoPlay loop muted className="w-96">
+        <source src="/neon-circle-footage.mp4" />
+      </video>
+
+      <AuthButton accessToken={accessToken} />
     </div>
   );
 }

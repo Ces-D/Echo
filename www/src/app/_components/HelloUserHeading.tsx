@@ -6,7 +6,6 @@ export default async function HelloUserHeading({
 }: AuthorizationRequired) {
   const client = echoClient(accessToken);
   const { data } = await client.GET("/v1/current_user");
-  console.log(data);
 
   return (
     <h1>

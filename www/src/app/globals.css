@@ -1,7 +1,8 @@
 @import "tailwindcss";
+@plugin "daisyui";
 
 :root {
-  --background: "#FFFFFF"; /* Pure White */
+  /* Pure White */
   --secondary-background: "#F2F2F2"; /* Light Gray */
 
   /* Primary Accents */
@@ -12,12 +13,11 @@
   --text-primary: "#121212"; /* Deep Black */
   --text-secondary: "#4D4D4D"; /* Dark Gray for readability */
   --button-hover: "#1AA34A"; /* Slightly darker Spotify Green */
-  --border-gray: "#D9D9D9"; /* Soft Gray for Borders */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: "#121212"; /* Deep Black (Spotify) */
+    /* Deep Black (Spotify) */
     --secondary-background: "#181818"; /* Dark Gray (Spotify) */
 
     /* Text & UI Elements */
@@ -57,7 +57,6 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-button-hover: var(--button-hover);
-  --color-border-gray: var(--border-gray);
 }
 
 @layer base {
