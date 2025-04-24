@@ -31,6 +31,7 @@ How -
 
 # TODO:
 
-- [ ] debug server docker file and issue related to docker compose 
-You replicate by running docker compose. some type of diesel and postgres adapter issue
+- [ ] debug server docker file and issue related to docker compose
+  You replicate by running docker compose. some type of diesel and postgres adapter issue
 - [ ] Make sure that we can get the user data
+- [ ] Save the tracks into our database and link the track item to the user
