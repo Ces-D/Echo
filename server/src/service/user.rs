@@ -2,10 +2,13 @@ use actix_web::{http::header::Header, web::Json, HttpRequest, Result};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use rspotify::prelude::OAuthClient;
 
-use crate::shared::{
-    crypto::decrypt_session_token, errors::http_spotify_client_error, types::DbPool,
+use crate::{
+    client::{
+        pg::{user::get_user_by_spotify_id, DbPool},
+        spotify::{model::PrivateUser, spotify_client},
+    },
+    shared::{crypto::authorization::decrypt_session_token, errors::http_spotify_client_error},
 };
-use crate::{client, shared};
 
 #[derive(
     serde::Serialize, serde::Deserialize, Debug, Clone, schemars::JsonSchema, apistos::ApiComponent,
@@ -14,10 +17,10 @@ pub struct CompleteUser {
     pub id: i32,
     pub spotify_id: String,
     pub name: Option<String>,
-    pub spotify: crate::shared::types::SpotifyPrivateUser,
+    pub spotify: PrivateUser,
 }
 
-#[apistos::api_operation()]
+#[apistos::api_operation(summary = "Get the complete user")]
 pub async fn get_complete_current_user(
     req: HttpRequest,
     pool: actix_web::web::Data<DbPool>,
@@ -25,7 +28,7 @@ pub async fn get_complete_current_user(
     let credentials = Authorization::<Bearer>::parse(&req)?;
     let bearer = credentials.as_ref();
     let token = decrypt_session_token(bearer.token())?;
-    let client = client::spotify_client(Some(token), None);
+    let client = spotify_client(Some(token), None);
 
     let spotify_user = client
         .current_user()
@@ -34,11 +37,11 @@ pub async fn get_complete_current_user(
     let spotify_id = spotify_user.id.clone();
     let db_user = actix_web::web::block(move || {
         let conn = pool.get().expect("couldn't get db connection from pool");
-        crate::client::pg::get_user_by_spotify_id(conn, spotify_id.to_string())
+        get_user_by_spotify_id(conn, spotify_id.to_string())
     })
     .await?
     .await
-    .map_err(shared::errors::http_diesel_error)?;
+    .map_err(crate::shared::errors::http_diesel_error)?;
 
     Ok(Json(CompleteUser {
         id: db_user.id,

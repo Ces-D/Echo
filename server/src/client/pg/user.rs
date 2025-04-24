@@ -1,8 +1,12 @@
-use diesel::{prelude::Queryable, Insertable, QueryResult, Selectable};
-use rspotify::model::{Id, PrivateUser};
+use diesel::{
+    prelude::{Insertable, Queryable},
+    QueryResult, Selectable,
+};
+use rspotify::{model::PrivateUser, prelude::Id};
 
 use crate::schema::person;
-use crate::shared::types::PoolConnection;
+
+use super::PoolConnection;
 
 #[derive(Insertable)]
 #[diesel(table_name = person)]
@@ -11,7 +15,6 @@ struct InsertablePerson {
     pub name: Option<String>,
 }
 
-/// Not a route handler but a service function to create a user in the database
 pub async fn create_new_user(
     mut connection: PoolConnection,
     spotify_user: PrivateUser,

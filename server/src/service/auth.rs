@@ -1,8 +1,14 @@
-use crate::client::{pg::create_new_user, spotify_client};
-use crate::shared;
-use crate::shared::config::{get_env_var, Environment};
-use crate::shared::crypto::create_session_cookie;
-use crate::shared::{errors::http_spotify_client_error, types::DbPool};
+use crate::{
+    client::{
+        pg::{user::create_new_user, DbPool},
+        spotify::spotify_client,
+    },
+    shared::{
+        config::{get_env_var, Environment},
+        crypto::authorization::create_session_cookie,
+        errors::{http_diesel_error, http_spotify_client_error},
+    },
+};
 
 use actix_web::{web::Json, HttpRequest, Responder, Result};
 use rspotify::prelude::{BaseClient, OAuthClient};
@@ -14,7 +20,7 @@ pub struct SpotifyAuthUrlResponse {
     url: String,
 }
 
-#[apistos::api_operation()]
+#[apistos::api_operation(summary = "Generate the spotify authorization url")]
 pub async fn generate_spotify_request_url() -> Result<Json<SpotifyAuthUrlResponse>> {
     let client = spotify_client(None, None);
     match client.get_authorize_url(true) {
@@ -31,7 +37,7 @@ pub struct ParseSpotifyResponseUrlQueries {
     pub code: String,
 }
 
-#[apistos::api_operation()]
+#[apistos::api_operation(summary = "Parse the response after following the authorization url")]
 pub async fn parse_spotify_response_url(
     query: actix_web::web::Query<ParseSpotifyResponseUrlQueries>,
     pool: actix_web::web::Data<DbPool>,
@@ -67,7 +73,7 @@ pub async fn parse_spotify_response_url(
     })
     .await?
     .await
-    .map_err(shared::errors::http_diesel_error)?;
+    .map_err(http_diesel_error)?;
 
     let stored_token = client.get_token();
     let locked = stored_token.lock().await.unwrap();

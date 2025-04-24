@@ -11,7 +11,7 @@ async fn authorizaton_required(
     req: ServiceRequest,
     credentials: BearerAuth,
 ) -> Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
-    match shared::crypto::decrypt_session_token(credentials.token()) {
+    match shared::crypto::authorization::decrypt_session_token(credentials.token()) {
         Ok(_) => Ok(req),
         Err(_) => Err((
             actix_web::error::ErrorUnauthorized("Incorrect authorization"),
@@ -25,7 +25,7 @@ pub async fn run() -> std::io::Result<()> {
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let database_pool = client::database_pool();
+    let database_pool = client::pg::database_pool();
 
     HttpServer::new(move || {
         let api_spec = shared::config::create_api_spec();
@@ -63,6 +63,10 @@ pub async fn run() -> std::io::Result<()> {
                     .route(
                         "/current_user",
                         web::get().to(service::user::get_complete_current_user),
+                    )
+                    .route(
+                        "/current_user/playlists",
+                        web::get().to(service::playlist::get_user_playlists::get_user_playlists),
                     ),
             )
             .build("/openapi.json")
