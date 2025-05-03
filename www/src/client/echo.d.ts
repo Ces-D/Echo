@@ -27,6 +27,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Generate the spotify authorization url */
         get: operations["get_auth-spotify-dbb9afccfe74d0c7282cb40053eb6e19"];
         put?: never;
         post?: never;
@@ -43,6 +44,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Parse the response after following the authorization url */
         get: operations["get_auth-spotify-callback-171ce3cfe028d54c15e4ce04675b195a"];
         put?: never;
         post?: never;
@@ -59,7 +61,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get the complete user */
         get: operations["get_v1-current_user-dc0a601424de35d7783927c92f346de9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/current_user/playlists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a summary of all the current users playlists */
+        get: operations["get_v1-current_user-playlists-f218991bbfbd054fbdfeec3bd50a8dac"];
         put?: never;
         post?: never;
         delete?: never;
@@ -77,14 +97,10 @@ export interface components {
             /** Format: int32 */
             id: number;
             name?: string | null;
-            spotify: components["schemas"]["SpotifyPrivateUser"];
+            spotify: components["schemas"]["PrivateUser"];
             spotify_id: string;
         };
-        /** SpotifyAuthUrlResponse */
-        SpotifyAuthUrlResponse: {
-            url: string;
-        };
-        SpotifyImage: {
+        Image: {
             /** Format: uint32 */
             height?: number | null;
             url: string;
@@ -92,16 +108,31 @@ export interface components {
             width?: number | null;
         };
         /** @description Wrapper around  rspotify::PrivateUser */
-        SpotifyPrivateUser: {
+        PrivateUser: {
             display_name?: string | null;
             email?: string | null;
             href: string;
             id: string;
-            images: components["schemas"]["SpotifyImage"][];
-            product?: components["schemas"]["SpotifySubscriptionLevel"] | null;
+            images: components["schemas"]["Image"][];
+            product?: components["schemas"]["SubscriptionLevel"] | null;
+        };
+        /** SimplePlaylist */
+        SimplePlaylist: {
+            collaborative: boolean;
+            id: string;
+            images: components["schemas"]["Image"][];
+            name: string;
+            owner_id: string;
+            public?: boolean | null;
+            /** Format: uint32 */
+            total_tracks: number;
+        };
+        /** SpotifyAuthUrlResponse */
+        SpotifyAuthUrlResponse: {
+            url: string;
         };
         /** @enum {string} */
-        SpotifySubscriptionLevel: "Premium" | "Free";
+        SubscriptionLevel: "Premium" | "Free";
     };
     responses: never;
     parameters: never;
@@ -168,6 +199,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompleteUser"];
+                };
+            };
+        };
+    };
+    "get_v1-current_user-playlists-f218991bbfbd054fbdfeec3bd50a8dac": {
+        parameters: {
+            query?: {
+                limit?: number | null;
+                offset?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimplePlaylist"][];
                 };
             };
         };

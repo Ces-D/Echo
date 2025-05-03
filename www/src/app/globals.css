@@ -1,30 +1,30 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
 :root {
-  /* Pure White */
-  --secondary-background: "#F2F2F2"; /* Light Gray */
+  --background: #f2f2f2;
+  /* Colors */
+  --primary: #1db954;
+  --secondary: #541db9;
+  --accent: #b9541d;
+  --primary-50: #0f612c;
+  --secondary-50: #2c0f61;
+  --accent-50: #612c0f;
 
-  /* Primary Accents */
-  --accent-green: "#1DB954"; /* Spotify Green */
-  --accent-red: "#FF0000"; /* YouTube Red */
-
-  /* Text & UI Elements */
-  --text-primary: "#121212"; /* Deep Black */
-  --text-secondary: "#4D4D4D"; /* Dark Gray for readability */
-  --button-hover: "#1AA34A"; /* Slightly darker Spotify Green */
+  --text-primary: #181818;
+  --text-secondary: #4d4d4d;
+  --text-inverse-primary: #f2f2f2;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Deep Black (Spotify) */
-    --secondary-background: "#181818"; /* Dark Gray (Spotify) */
+    --background: #181818;
+    --primary-50: #57e589;
+    --secondary-50: #8957e5;
+    --accent-50: #e58957;
 
-    /* Text & UI Elements */
-    --text-primary: "#FFFFFF"; /* Bright White (YouTube Influence) */
-    --text-secondary: "#D9D9D9"; /* Dimmed White */
-    --button-hover: "#1ED760"; /* Hover Green (Spotify) */
-    --border-gray: "#282828"; /* Rich Gray (UI Borders) */
+    --text-primary: #f2f2f2;
+    --text-secondary: #d9d9d9;
+    --text-inverse-primary: #181818;
   }
 }
 
@@ -51,12 +51,15 @@
 @theme inline {
   /* Colors */
   --color-background: var(--background);
-  --color-secondary-background: var(--secondary-background);
-  --color-accent-green: var(--accent-green);
-  --color-accent-red: var(--accent-red);
+  --color-primary: var(--primary);
+  --color-primary-50: var(--primary-50);
+  --color-secondary: var(--secondary);
+  --color-secondary-50: var(--secondary-50);
+  --color-accent: var(--accent);
+  --color-accent-50: var(--accent-50);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --color-button-hover: var(--button-hover);
+  --color-text-inverse-primary: var(--text-inverse-primary);
 }
 
 @layer base {
@@ -97,5 +100,32 @@
   h4,
   h5 {
     color: var(--text-primary);
+    cursor: default;
+  }
+
+  *:hover {
+    outline-color: var(--secondary);
+  }
+  *:focus {
+    outline-color: var(--secondary);
+  }
+}
+
+@layer components {
+  .bg-prime {
+    background-color: var(--primary);
+    transition:
+      background-color 0.3s ease-in-out,
+      opacity 0.3s ease-in-out;
+  }
+  .bg-prime:hover {
+    background-color: var(--primary-50);
+  }
+  .bg-prime:disabled,
+  .bg-prime[aria-disabled="true"] {
+    background-color: var(--primary-50);
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 }

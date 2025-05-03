@@ -1,6 +1,11 @@
+import "server-only";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import { echoClient } from "@/client";
 
-export async function getAuthorizationAccessToken(): Promise<
+/** Try to get an access token. Undefined if its not available */
+export const getAuthorizationAccessToken = cache(async function (): Promise<
   string | undefined
 > {
   const cookie = await cookies();
@@ -12,4 +17,24 @@ export async function getAuthorizationAccessToken(): Promise<
   if (authorization) {
     return authorization.value;
   }
-}
+});
+
+/** Get the access token, or redirect the user to login if its not present
+ *  USE FOR PROTECTED ROUTES
+ * */
+export const getRequiredAuthorizationAccessToken = cache(
+  async (): Promise<string> => {
+    const accessToken = await getAuthorizationAccessToken();
+    if (typeof accessToken === "string") {
+      return accessToken;
+    } else {
+      const client = echoClient(undefined);
+      const authorizationUrl = await client.GET("/auth/spotify");
+      if (authorizationUrl.data) {
+        redirect(authorizationUrl.data.url);
+      } else {
+        throw new Error("Error getting authorization URL");
+      }
+    }
+  },
+);

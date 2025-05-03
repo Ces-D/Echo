@@ -10,6 +10,7 @@ use super::PoolConnection;
 
 #[derive(Insertable)]
 #[diesel(table_name = person)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 struct InsertablePerson {
     pub spotify_id: String,
     pub name: Option<String>,
@@ -40,6 +41,7 @@ pub async fn create_new_user(
 
 #[derive(Queryable, PartialEq, Debug, Selectable)]
 #[diesel(table_name = person)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SelectablePerson {
     pub id: i32,
     pub spotify_id: String,
@@ -56,5 +58,5 @@ pub async fn get_user_by_spotify_id(
     person::table
         .filter(person::spotify_id.eq(spotify_id))
         .select(SelectablePerson::as_select())
-        .first::<SelectablePerson>(&mut connection)
+        .first(&mut connection)
 }

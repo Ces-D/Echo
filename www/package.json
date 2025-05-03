@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "daisyui": "^5.0.28",
     "next": "15.3.1",
     "openapi-fetch": "^0.13.5",
     "react": "^19.1.0",

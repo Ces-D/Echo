@@ -35,6 +35,12 @@ pub async fn get_user_playlists(
     Ok(Json(simple_playlists))
 }
 
+// TODO: I need to update the SimplePlaylist to include when the playlist was created. And if it
+// was loaded or not. Description if possible.
+// Actually no. I want the user to click on the row and go into the playlist. Then then will see
+// what songs are in the playlist but no loaded. This lets the use load specific playlist songs or
+// not
+
 #[derive(
     serde::Serialize, serde::Deserialize, Debug, Clone, schemars::JsonSchema, apistos::ApiComponent,
 )]

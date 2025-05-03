@@ -1,6 +1,6 @@
 use actix_web::{http::header::Header, web::Json, HttpRequest, Result};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use rspotify::prelude::OAuthClient;
+use rspotify::{model::Id, prelude::OAuthClient};
 
 use crate::{
     client::{
@@ -37,11 +37,12 @@ pub async fn get_complete_current_user(
     let spotify_id = spotify_user.id.clone();
     let db_user = actix_web::web::block(move || {
         let conn = pool.get().expect("couldn't get db connection from pool");
-        get_user_by_spotify_id(conn, spotify_id.to_string())
+        get_user_by_spotify_id(conn, spotify_id.id().to_string())
     })
     .await?
     .await
     .map_err(crate::shared::errors::http_diesel_error)?;
+    println!("db_user: {:?}", db_user);
 
     Ok(Json(CompleteUser {
         id: db_user.id,
